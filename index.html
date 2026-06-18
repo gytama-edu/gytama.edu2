@@ -4,7 +4,232 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quiz Hub | Mr. Gilang Yudha Tama</title>
+/* ===== LAPTOP SCREEN FIT FIX ===== */
 
+html, body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+.wrapper {
+  width: min(1320px, 96%);
+  padding: 16px 0 24px;
+}
+
+/* HEADER */
+header {
+  padding: 18px 22px;
+}
+
+.badge {
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  font-size: 0.78rem;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 4rem);
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  max-width: 760px;
+}
+
+.creator {
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
+.control-panel {
+  margin-top: 18px;
+  gap: 12px;
+}
+
+.search-box {
+  padding: 12px 14px;
+  font-size: 0.95rem;
+}
+
+.status {
+  padding: 12px 14px;
+  font-size: 0.95rem;
+}
+
+/* FILTER BUTTONS */
+.filters {
+  gap: 10px;
+  margin: 18px 0 20px;
+}
+
+.filter-btn {
+  padding: 9px 12px;
+  font-size: 0.82rem;
+}
+
+/* QUIZ GRID */
+.grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.card {
+  min-height: 215px;
+  padding: 18px;
+}
+
+.icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.tag {
+  font-size: 0.66rem;
+  padding: 5px 7px;
+  margin-bottom: 10px;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.card p {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.meta {
+  margin: 12px 0;
+  font-size: 0.76rem;
+}
+
+.play-btn {
+  padding: 10px 12px;
+  font-size: 0.88rem;
+}
+
+footer {
+  margin-top: 24px;
+  font-size: 0.82rem;
+}
+
+/* GOOD FOR 1366x768 LAPTOPS */
+@media (max-height: 800px) {
+  .wrapper {
+    padding-top: 10px;
+  }
+
+  header {
+    padding: 14px 18px;
+  }
+
+  .badge {
+    margin-bottom: 8px;
+    font-size: 0.72rem;
+  }
+
+  h1 {
+    font-size: clamp(1.8rem, 3.4vw, 3.2rem);
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .creator {
+    margin-top: 8px;
+    font-size: 0.9rem;
+  }
+
+  .control-panel {
+    margin-top: 14px;
+  }
+
+  .search-box,
+  .status {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  .filters {
+    margin: 14px 0 16px;
+    gap: 8px;
+  }
+
+  .filter-btn {
+    padding: 8px 10px;
+    font-size: 0.76rem;
+  }
+
+  .grid {
+    gap: 14px;
+  }
+
+  .card {
+    min-height: 195px;
+    padding: 15px;
+  }
+
+  .icon {
+    font-size: 1.7rem;
+    margin-bottom: 10px;
+  }
+
+  .card h2 {
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+
+  .card p {
+    font-size: 0.82rem;
+    line-height: 1.35;
+    -webkit-line-clamp: 3;
+  }
+
+  .meta {
+    margin: 10px 0;
+    font-size: 0.72rem;
+  }
+
+  .play-btn {
+    padding: 9px 10px;
+    font-size: 0.8rem;
+  }
+}
+
+/* TABLET / SMALLER WIDTH */
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .control-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .status {
+    white-space: normal;
+  }
+}
   <style>
     * {
       box-sizing: border-box;
