@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Cyberpunk Millionaire Quiz</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #050510;
+      --panel: rgba(13, 16, 35, 0.92);
+      --cyan: #22f7ff;
+      --pink: #ff2bd6;
+      --yellow: #ffe66d;
+      --green: #39ff88;
+      --red: #ff4d6d;
+      --purple: #8f4dff;
+      --text: #f4f7ff;
+      --muted: #aab2dd;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Courier New", monospace;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 43, 214, 0.25), transparent 35%),
+        radial-gradient(circle at top right, rgba(34, 247, 255, 0.2), transparent 35%),
+        linear-gradient(180deg, #050510, #11142b 55%, #04040a);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(34, 247, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 43, 214, 0.05) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+      z-index: -2;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.035) 0px,
+        rgba(255, 255, 255, 0.035) 1px,
+        transparent 2px,
+        transparent 6px
+      );
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .page {
+      width: min(1250px, 94%);
+      margin: 0 auto;
+      padding: 24px 0 50px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .back-link {
+      color: #050510;
+      background: var(--yellow);
+      border: 2px solid var(--cyan);
+      text-decoration: none;
+      padding: 11px 14px;
+      font-weight: bold;
+      box-shadow: 4px 4px 0 var(--pink);
+      text-transform: uppercase;
+    }
+
+    .back-link:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--cyan);
+    }
+
+    .brand {
+      text-align: right;
+      color: var(--green);
+      font-weight: bold;
+      text-shadow: 0 0 12px var(--green);
+    }
+
+    header {
+      border: 3px solid var(--cyan);
+      background: rgba(5, 7, 18, 0.82);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow:
+        0 0 18px rgba(34, 247, 255, 0.5),
+        inset 0 0 24px rgba(255, 43, 214, 0.16);
+    }
+
+    .badge {
+      display: inline-block;
+      color: #050510;
+      background: var(--green);
+      padding: 7px 10px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      box-shadow: 4px 4px 0 var(--pink);
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(2.1rem, 5vw, 4.9rem);
+      text-transform: uppercase;
+      line-height: 0.92;
+      text-shadow:
+        3px 3px 0 var(--pink),
+        -3px -3px 0 var(--cyan),
+        0 0 25px rgba(255, 43, 214, 0.75);
+      margin-bottom: 14px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 800px;
+      line-height: 1.6;
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: 1fr 330px;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .main-panel,
+    .money-panel {
+      border: 3px solid rgba(34, 247, 255, 0.78);
+      background: var(--panel);
+      box-shadow:
+        0 0 18px rgba(34, 247, 255, 0.25),
+        7px 7px 0 rgba(255, 43, 214, 0.5);
+    }
+
+    .main-panel {
+      min-height: 610px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .main-panel::before,
+    .money-panel::before {
+      content: "";
+      display: block;
+      height: 7px;
+      background: linear-gradient(90deg, var(--pink), var(--cyan), var(--yellow), var(--green));
+      margin: -24px -24px 22px;
+    }
+
+    .money-panel {
+      padding: 24px;
+    }
+
+    .money-panel::before {
+      margin: -24px -24px 18px;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .start-box,
+    .result-box {
+      text-align: center;
+      padding: 45px 20px;
+    }
+
+    .start-box h2,
+    .result-box h2 {
+      font-size: clamp(1.7rem, 4vw, 3rem);
+      text-transform: uppercase;
+      color: var(--yellow);
+      text-shadow: 3px 3px 0 var(--pink);
+      margin-bottom: 18px;
+    }
+
+    .start-box p,
+    .result-box p {
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 700px;
+      margin: 0 auto 24px;
+    }
+
+    .select-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    select {
+      width: 100%;
+      background: #070815;
+      color: var(--text);
+      border: 2px solid var(--purple);
+      padding: 14px;
+      font-family: inherit;
+      font-weight: bold;
+      outline: none;
+      box-shadow: 0 0 14px rgba(143, 77, 255, 0.45);
+    }
+
+    .btn {
+      border: 2px solid var(--yellow);
+      background: var(--pink);
+      color: #050510;
+      padding: 13px 17px;
+      font-family: inherit;
+      font-weight: bold;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 var(--cyan);
+      transition: 0.18s;
+    }
+
+    .btn:hover {
+      background: var(--yellow);
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--pink);
+    }
+
+    .btn.secondary {
+      background: var(--cyan);
+      box-shadow: 4px 4px 0 var(--pink);
+    }
+
+    .btn.danger {
+      background: var(--red);
+      color: white;
+      box-shadow: 4px 4px 0 var(--yellow);
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .hud-item {
+      border: 2px solid var(--purple);
+      background: rgba(143, 77, 255, 0.13);
+      padding: 13px;
+      text-align: center;
+      color: var(--yellow);
+      font-weight: bold;
+      box-shadow: inset 0 0 16px rgba(143, 77, 255, 0.25);
+    }
+
+    .question-box {
+      border: 3px solid var(--yellow);
+      background: rgba(255, 230, 109, 0.08);
+      padding: 26px;
+      min-height: 170px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin-bottom: 22px;
+      box-shadow:
+        0 0 18px rgba(255, 230, 109, 0.25),
+        inset 0 0 18px rgba(255, 43, 214, 0.11);
+    }
+
+    .question-box h2 {
+      font-size: clamp(1.25rem, 2.7vw, 2rem);
+      line-height: 1.45;
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .answer-btn {
+      border: 3px solid var(--cyan);
+      background: rgba(5, 8, 22, 0.95);
+      color: var(--text);
+      padding: 18px;
+      font-family: inherit;
+      text-align: left;
+      min-height: 76px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 rgba(255, 43, 214, 0.6);
+      transition: 0.18s;
+      line-height: 1.4;
+    }
+
+    .answer-btn:hover:not(:disabled) {
+      background: rgba(34, 247, 255, 0.12);
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 rgba(255, 43, 214, 0.8);
+    }
+
+    .answer-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .answer-btn.correct {
+      border-color: var(--green);
+      background: rgba(57, 255, 136, 0.2);
+      color: var(--green);
+      box-shadow: 0 0 18px rgba(57, 255, 136, 0.45);
+    }
+
+    .answer-btn.wrong {
+      border-color: var(--red);
+      background: rgba(255, 77, 109, 0.2);
+      color: var(--red);
+      box-shadow: 0 0 18px rgba(255, 77, 109, 0.45);
+    }
+
+    .lifelines {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .message {
+      border: 2px dashed var(--pink);
+      color: var(--muted);
+      padding: 14px;
+      min-height: 52px;
+      line-height: 1.5;
+      background: rgba(255, 43, 214, 0.08);
+    }
+
+    .ladder-title {
+      color: var(--yellow);
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      text-shadow: 2px 2px 0 var(--pink);
+    }
+
+    .money-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 7px;
+    }
+
+    .money-list li {
+      display: flex;
+      justify-content: space-between;
+      border: 2px solid rgba(143, 77, 255, 0.55);
+      background: rgba(143, 77, 255, 0.1);
+      padding: 8px 10px;
+      color: var(--muted);
+      font-weight: bold;
+    }
+
+    .money-list li.active {
+      color: #050510;
+      background: var(--yellow);
+      border-color: var(--pink);
+      box-shadow: 0 0 16px rgba(255, 230, 109, 0.7);
+      transform: scale(1.03);
+    }
+
+    .money-list li.safe {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .money-list li.cleared {
+      color: var(--cyan);
+      border-color: rgba(34, 247, 255, 0.75);
+    }
+
+    .result-prize {
+      font-size: clamp(2rem, 5vw, 4rem);
+      color: var(--green);
+      text-shadow:
+        3px 3px 0 var(--pink),
+        0 0 22px rgba(57, 255, 136, 0.8);
+      margin: 20px 0;
+      font-weight: bold;
+    }
+
+    @media (max-width: 920px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .money-panel {
+        order: -1;
+      }
+
+      .money-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        flex-direction: unset;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .brand {
+        text-align: left;
+      }
+
+      .select-row {
+        grid-template-columns: 1fr;
+      }
+
+      .hud {
+        grid-template-columns: 1fr;
+      }
+
+      .answers {
+        grid-template-columns: 1fr;
+      }
+
+      .main-panel,
+      .money-panel {
+        padding: 18px;
+      }
+
+      .main-panel::before,
+      .money-panel::before {
+        margin: -18px -18px 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a class="back-link" href="../index.html">← Back to Quiz Hub</a>
+      <div class="brand">By Mr. Gilang Yudha Tama</div>
+    </div>
+
+    <header>
+      <div class="badge">Cyberpunk Game Mode</div>
+      <h1>Millionaire Quiz</h1>
+      <p class="subtitle">
+        Choose a category, climb the neon money ladder, and survive 15 questions.
+        Wrong answer? The city takes your credits.
+      </p>
+    </header>
+
+    <section class="game-layout">
+      <main class="main-panel">
+        <section id="startScreen" class="screen active">
+          <div class="start-box">
+            <h2>Enter the Neon Ladder</h2>
+            <p>
+              Pick your quiz category. Question 1 is easy. Question 15 is the final boss.
+              The higher you go, the harder it gets.
+            </p>
+
+            <div class="select-row">
+              <select id="categorySelect"></select>
+              <button class="btn" onclick="startGame()">Start Game</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="gameScreen" class="screen">
+          <div class="hud">
+            <div class="hud-item">Question <span id="questionNumber">1</span>/15</div>
+            <div class="hud-item">Current: <span id="currentPrize">$100</span></div>
+            <div class="hud-item">Safe: <span id="safePrize">$0</span></div>
+          </div>
+
+          <div class="question-box">
+            <h2 id="questionText">Question appears here</h2>
+          </div>
+
+          <div id="answerGrid" class="answers"></div>
+
+          <div class="lifelines">
+            <button id="fiftyBtn" class="btn secondary" onclick="useFiftyFifty()">50:50</button>
+            <button id="skipBtn" class="btn secondary" onclick="useSkip()">Skip</button>
+            <button class="btn danger" onclick="quitGame()">Quit</button>
+          </div>
+
+          <div id="messageBox" class="message">
+            System online. Choose wisely.
+          </div>
+        </section>
+
+        <section id="resultScreen" class="screen">
+          <div class="result-box">
+            <h2 id="resultTitle">Game Over</h2>
+            <p id="resultText">You walked away with:</p>
+            <div id="resultPrize" class="result-prize">$0</div>
+
+            <button class="btn" onclick="restartGame()">Play Again</button>
+            <a class="btn secondary" href="../index.html" style="display:inline-block; text-decoration:none; margin-left:10px;">
+              Back to Hub
+            </a>
+          </div>
+        </section>
+      </main>
+
+      <aside class="money-panel">
+        <h2 class="ladder-title">Money Ladder</h2>
+        <ol id="moneyList" class="money-list"></ol>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    const moneyLevels = [
+      "$100",
+      "$200",
+      "$300",
+      "$500",
+      "$1,000",
+      "$2,000",
+      "$4,000",
+      "$8,000",
+      "$16,000",
+      "$32,000",
+      "$64,000",
+      "$125,000",
+      "$250,000",
+      "$500,000",
+      "$1,000,000"
+    ];
+
+    const questionBank = {
+      "Grammar Mix": [
+        {
+          question: "Choose the correct sentence.",
+          answers: [
+            "She go to school every day.",
+            "She goes to school every day.",
+            "She going to school every day.",
+            "She gone to school every day."
+          ],
+          correct: 1
+        },
+        {
+          question: "Which word completes the sentence? I _____ coffee every morning.",
+          answers: ["drink", "drinks", "drinking", "drank"],
+          correct: 0
+        },
+        {
+          question: "Choose the correct past tense form: They _____ football yesterday.",
+          answers: ["play", "plays", "played", "playing"],
+          correct: 2
+        },
+        {
+          question: "Which sentence uses the present continuous correctly?",
+          answers: [
+            "He is study now.",
+            "He studying now.",
+            "He is studying now.",
+            "He studies now."
+          ],
+          correct: 2
+        },
+        {
+          question: "Choose the correct modal verb: You _____ wear a helmet when riding a motorcycle.",
+          answers: ["must", "may", "might", "could"],
+          correct: 0
+        },
+        {
+          question: "Which sentence is correct?",
+          answers: [
+            "I have lived here since 2020.",
+            "I have lived here for 2020.",
+            "I live here since 2020.",
+            "I am living here since 2020."
+          ],
+          correct: 0
+        },
+        {
+          question: "Choose the correct answer: If it rains, we _____ at home.",
+          answers: ["stay", "stayed", "will stay", "would stayed"],
+          correct: 2
+        },
+        {
+          question: "Which one is a second conditional sentence?",
+          answers: [
+            "If I study, I will pass.",
+            "If I studied, I would pass.",
+            "If I had studied, I would have passed.",
+            "If I am studying, I pass."
+          ],
+          correct: 1
+        },
+        {
+          question: "Choose the correct passive voice: Someone stole my bag.",
+          answers: [
+            "My bag is stole.",
+            "My bag was stolen.",
+            "My bag has stole.",
+            "My bag stolen was."
+          ],
+          correct: 1
+        },
+        {
+          question: "Choose the correct relative pronoun: The man _____ lives next door is a doctor.",
+          answers: ["which", "where", "who", "whose"],
+          correct: 2
+        },
+        {
+          question: "Which sentence uses reported speech correctly?",
+          answers: [
+            "She said she is tired.",
+            "She said she was tired.",
+            "She said she tired.",
+            "She said was tired."
+          ],
+          correct: 1
+        },
+        {
+          question: "Choose the best sentence.",
+          answers: [
+            "Despite it was raining, we went out.",
+            "Although the rain, we went out.",
+            "Despite the rain, we went out.",
+            "In spite it rained, we went out."
+          ],
+          correct: 2
+        },
+        {
+          question: "Choose the correct sentence with a gerund.",
+          answers: [
+            "I enjoy to swim.",
+            "I enjoy swimming.",
+            "I enjoy swim.",
+            "I enjoy swam."
+          ],
+          correct: 1
+        },
+        {
+          question: "Choose the correct third conditional sentence.",
+          answers: [
+            "If I knew, I would tell you.",
+            "If I know, I will tell you.",
+            "If I had known, I would have told you.",
+            "If I have known, I would tell you."
+          ],
+          correct: 2
+        },
+        {
+          question: "Choose the most advanced and accurate sentence.",
+          answers: [
+            "Had I known about the meeting, I would have attended it.",
+            "If I would know about the meeting, I attended it.",
+            "Had I knew about the meeting, I would attend it.",
+            "If I had know about the meeting, I would have attend it."
+          ],
+          correct: 0
+        }
+      ],
+
+      "Modal Verbs": [
+        {
+          question: "You _____ smoke here. It is forbidden.",
+          answers: ["must not", "do not have to", "might not", "should not have"],
+          correct: 0
+        },
+        {
+          question: "You _____ bring an umbrella. It looks cloudy.",
+          answers: ["should", "must not", "cannot", "would have"],
+          correct: 0
+        },
+        {
+          question: "Students _____ wear uniforms at this school. It is a rule.",
+          answers: ["may", "must", "might", "could"],
+          correct: 1
+        },
+        {
+          question: "I _____ swim when I was five years old.",
+          answers: ["can", "could", "must", "may"],
+          correct: 1
+        },
+        {
+          question: "You _____ finish it today. Tomorrow is also fine.",
+          answers: ["must", "must not", "do not have to", "cannot"],
+          correct: 2
+        },
+        {
+          question: "He _____ be at home. The lights are on.",
+          answers: ["must", "must not", "cannot", "should not"],
+          correct: 0
+        },
+        {
+          question: "She _____ be sick. I saw her playing basketball five minutes ago.",
+          answers: ["must", "cannot", "should", "may"],
+          correct: 1
+        },
+        {
+          question: "You _____ have told me earlier. Now it is too late.",
+          answers: ["should", "should have", "must", "can have"],
+          correct: 1
+        },
+        {
+          question: "I _____ rather stay home than go out tonight.",
+          answers: ["should", "would", "must", "can"],
+          correct: 1
+        },
+        {
+          question: "He _____ have forgotten the meeting. He is usually very punctual.",
+          answers: ["must not", "might", "cannot", "should"],
+          correct: 2
+        },
+        {
+          question: "You _____ have bought so much food. We already had enough.",
+          answers: ["needn't", "needn't have", "mustn't", "couldn't"],
+          correct: 1
+        },
+        {
+          question: "The answer _____ be correct, but I am not completely sure.",
+          answers: ["must", "might", "cannot", "has to"],
+          correct: 1
+        },
+        {
+          question: "By next year, students _____ be able to use the new lab.",
+          answers: ["will", "must", "could have", "should have"],
+          correct: 0
+        },
+        {
+          question: "You _____ have seen John at school. He moved to Japan last month.",
+          answers: ["must", "could", "cannot", "should"],
+          correct: 2
+        },
+        {
+          question: "Choose the sentence that shows regret about the past.",
+          answers: [
+            "I should study harder.",
+            "I should have studied harder.",
+            "I must study harder.",
+            "I can study harder."
+          ],
+          correct: 1
+        }
+      ],
+
+      "If Conditional Sentences": [
+        {
+          question: "If you heat water to 100°C, it _____.",
+          answers: ["boils", "boiled", "will boiled", "would boil"],
+          correct: 0
+        },
+        {
+          question: "If I have time, I _____ you later.",
+          answers: ["call", "called", "will call", "would call"],
+          correct: 2
+        },
+        {
+          question: "If she studies harder, she _____ the exam.",
+          answers: ["passes", "passed", "will pass", "would pass"],
+          correct: 2
+        },
+        {
+          question: "If I _____ rich, I would travel around the world.",
+          answers: ["am", "was", "were", "will be"],
+          correct: 2
+        },
+        {
+          question: "If he knew the answer, he _____ us.",
+          answers: ["will tell", "would tell", "tells", "told"],
+          correct: 1
+        },
+        {
+          question: "If they had left earlier, they _____ the train.",
+          answers: [
+            "would catch",
+            "will catch",
+            "would have caught",
+            "caught"
+          ],
+          correct: 2
+        },
+        {
+          question: "Choose the zero conditional sentence.",
+          answers: [
+            "If I see him, I will tell him.",
+            "If ice melts, it becomes water.",
+            "If I were you, I would apologize.",
+            "If I had known, I would have helped."
+          ],
+          correct: 1
+        },
+        {
+          question: "Choose the first conditional sentence.",
+          answers: [
+            "If it rains, we will cancel the trip.",
+            "If it rained, we would cancel the trip.",
+            "If it had rained, we would have cancelled the trip.",
+            "If it rains, we cancel the trip every time."
+          ],
+          correct: 0
+        },
+        {
+          question: "Choose the second conditional sentence.",
+          answers: [
+            "If I have money, I will buy it.",
+            "If I had money, I would buy it.",
+            "If I had had money, I would have bought it.",
+            "If I get money, I buy it."
+          ],
+          correct: 1
+        },
+        {
+          question: "Choose the third conditional sentence.",
+          answers: [
+            "If he trains, he wins.",
+            "If he trains, he will win.",
+            "If he trained, he would win.",
+            "If he had trained, he would have won."
+          ],
+          correct: 3
+        },
+        {
+          question: "If I had known you were coming, I _____ dinner.",
+          answers: [
+            "will cook",
+            "would cook",
+            "would have cooked",
+            "cooked"
+          ],
+          correct: 2
+        },
+        {
+          question: "If she were more confident, she _____ better in interviews.",
+          answers: [
+            "performs",
+            "will perform",
+            "would perform",
+            "would have performed"
+          ],
+          correct: 2
+        },
+        {
+          question: "If you had listened carefully, you _____ the mistake.",
+          answers: [
+            "will avoid",
+            "would avoid",
+            "would have avoided",
+            "avoid"
+          ],
+          correct: 2
+        },
+        {
+          question: "Choose the mixed conditional sentence.",
+          answers: [
+            "If I study, I will pass.",
+            "If I studied, I would pass.",
+            "If I had studied medicine, I would be a doctor now.",
+            "If water reaches 100°C, it boils."
+          ],
+          correct: 2
+        },
+        {
+          question: "Choose the sentence with inversion in a conditional.",
+          answers: [
+            "If I had known, I would have helped.",
+            "Had I known, I would have helped.",
+            "If had I known, I would have helped.",
+            "I had known if I would have helped."
+          ],
+          correct: 1
+        }
+      ]
+    };
+
+    let selectedQuestions = [];
+    let currentQuestionIndex = 0;
+    let safeMoney = "$0";
+    let usedFifty = false;
+    let usedSkip = false;
+    let gameLocked = false;
+
+    const categorySelect = document.getElementById("categorySelect");
+    const startScreen = document.getElementById("startScreen");
+    const gameScreen = document.getElementById("gameScreen");
+    const resultScreen = document.getElementById("resultScreen");
+    const questionNumber = document.getElementById("questionNumber");
+    const currentPrize = document.getElementById("currentPrize");
+    const safePrize = document.getElementById("safePrize");
+    const questionText = document.getElementById("questionText");
+    const answerGrid = document.getElementById("answerGrid");
+    const messageBox = document.getElementById("messageBox");
+    const moneyList = document.getElementById("moneyList");
+    const fiftyBtn = document.getElementById("fiftyBtn");
+    const skipBtn = document.getElementById("skipBtn");
+
+    const resultTitle = document.getElementById("resultTitle");
+    const resultText = document.getElementById("resultText");
+    const resultPrize = document.getElementById("resultPrize");
+
+    function loadCategories() {
+      const categories = Object.keys(questionBank);
+
+      categories.forEach((category) => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        categorySelect.appendChild(option);
+      });
+    }
+
+    function showScreen(screen) {
+      startScreen.classList.remove("active");
+      gameScreen.classList.remove("active");
+      resultScreen.classList.remove("active");
+      screen.classList.add("active");
+    }
+
+    function startGame() {
+      const category = categorySelect.value;
+
+      selectedQuestions = questionBank[category].slice(0, 15);
+      currentQuestionIndex = 0;
+      safeMoney = "$0";
+      usedFifty = false;
+      usedSkip = false;
+      gameLocked = false;
+
+      fiftyBtn.disabled = false;
+      skipBtn.disabled = false;
+
+      showScreen(gameScreen);
+      renderMoneyLadder();
+      renderQuestion();
+
+      messageBox.textContent = "Game started. The neon ladder is watching.";
+    }
+
+    function renderMoneyLadder() {
+      moneyList.innerHTML = "";
+
+      moneyLevels.forEach((money, index) => {
+        const li = document.createElement("li");
+
+        if (index === currentQuestionIndex) {
+          li.classList.add("active");
+        }
+
+        if (index < currentQuestionIndex) {
+          li.classList.add("cleared");
+        }
+
+        if (index === 4 || index === 9 || index === 14) {
+          li.classList.add("safe");
+        }
+
+        li.innerHTML = `
+          <span>${index + 1}</span>
+          <span>${money}</span>
+        `;
+
+        moneyList.appendChild(li);
+      });
+    }
+
+    function renderQuestion() {
+      gameLocked = false;
+
+      const current = selectedQuestions[currentQuestionIndex];
+
+      questionNumber.textContent = currentQuestionIndex + 1;
+      currentPrize.textContent = moneyLevels[currentQuestionIndex];
+      safePrize.textContent = safeMoney;
+      questionText.textContent = current.question;
+
+      answerGrid.innerHTML = "";
+
+      current.answers.forEach((answer, index) => {
+        const button = document.createElement("button");
+        button.className = "answer-btn";
+        button.innerHTML = `<span>${String.fromCharCode(65 + index)}.</span> ${answer}`;
+        button.onclick = () => chooseAnswer(index);
+        answerGrid.appendChild(button);
+      });
+
+      renderMoneyLadder();
+    }
+
+    function chooseAnswer(selectedIndex) {
+      if (gameLocked) return;
+
+      gameLocked = true;
+
+      const current = selectedQuestions[currentQuestionIndex];
+      const buttons = document.querySelectorAll(".answer-btn");
+
+      buttons.forEach((button) => {
+        button.disabled = true;
+      });
+
+      if (selectedIndex === current.correct) {
+        buttons[selectedIndex].classList.add("correct");
+        messageBox.textContent = "Correct. Neon credits secured.";
+
+        if (currentQuestionIndex === 4) {
+          safeMoney = "$1,000";
+        }
+
+        if (currentQuestionIndex === 9) {
+          safeMoney = "$32,000";
+        }
+
+        if (currentQuestionIndex === 14) {
+          safeMoney = "$1,000,000";
+        }
+
+        setTimeout(() => {
+          if (currentQuestionIndex === 14) {
+            endGame("YOU WON!", "Cyber millionaire status unlocked.", "$1,000,000");
+          } else {
+            currentQuestionIndex++;
+            renderQuestion();
+          }
+        }, 900);
+      } else {
+        buttons[selectedIndex].classList.add("wrong");
+        buttons[current.correct].classList.add("correct");
+        messageBox.textContent = "Wrong answer. The city taxed your confidence.";
+
+        setTimeout(() => {
+          endGame("GAME OVER", "You walked away with your safe amount.", safeMoney);
+        }, 1200);
+      }
+    }
+
+    function useFiftyFifty() {
+      if (usedFifty || gameLocked) return;
+
+      usedFifty = true;
+      fiftyBtn.disabled = true;
+
+      const current = selectedQuestions[currentQuestionIndex];
+      const buttons = document.querySelectorAll(".answer-btn");
+
+      let wrongIndexes = [];
+
+      current.answers.forEach((answer, index) => {
+        if (index !== current.correct) {
+          wrongIndexes.push(index);
+        }
+      });
+
+      wrongIndexes = wrongIndexes.sort(() => Math.random() - 0.5);
+
+      buttons[wrongIndexes[0]].disabled = true;
+      buttons[wrongIndexes[0]].style.visibility = "hidden";
+
+      buttons[wrongIndexes[1]].disabled = true;
+      buttons[wrongIndexes[1]].style.visibility = "hidden";
+
+      messageBox.textContent = "50:50 activated. Two fake answers got deleted from the matrix.";
+    }
+
+    function useSkip() {
+      if (usedSkip || gameLocked) return;
+
+      usedSkip = true;
+      skipBtn.disabled = true;
+
+      messageBox.textContent = "Skip used. Dodged that question like a final boss attack.";
+
+      if (currentQuestionIndex === 14) {
+        endGame("YOU WON!", "You skipped the final boss and took the bag.", "$1,000,000");
+      } else {
+        currentQuestionIndex++;
+        renderQuestion();
+      }
+    }
+
+    function quitGame() {
+      let currentWinning = "$0";
+
+      if (currentQuestionIndex > 0) {
+        currentWinning = moneyLevels[currentQuestionIndex - 1];
+      }
+
+      endGame("YOU QUIT", "You escaped the neon city with your current prize.", currentWinning);
+    }
+
+    function endGame(title, text, prize) {
+      resultTitle.textContent = title;
+      resultText.textContent = text;
+      resultPrize.textContent = prize;
+
+      showScreen(resultScreen);
+    }
+
+    function restartGame() {
+      showScreen(startScreen);
+      renderMoneyLadder();
+    }
+
+    loadCategories();
+    renderMoneyLadder();
+  </script>
+</body>
+</html>
