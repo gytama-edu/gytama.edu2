@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Cyber Floor Quiz</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #050510;
+      --panel: rgba(13, 16, 35, 0.92);
+      --cyan: #22f7ff;
+      --pink: #ff2bd6;
+      --yellow: #ffe66d;
+      --green: #39ff88;
+      --red: #ff4d6d;
+      --purple: #8f4dff;
+      --text: #f4f7ff;
+      --muted: #aab2dd;
+      --teamA: #22f7ff;
+      --teamB: #ff2bd6;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Courier New", monospace;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 43, 214, 0.25), transparent 35%),
+        radial-gradient(circle at top right, rgba(34, 247, 255, 0.22), transparent 35%),
+        linear-gradient(180deg, #050510, #11142b 55%, #04040a);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(34, 247, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 43, 214, 0.05) 1px, transparent 1px);
+      background-size: 34px 34px;
+      pointer-events: none;
+      z-index: -2;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.035) 0px,
+        rgba(255, 255, 255, 0.035) 1px,
+        transparent 2px,
+        transparent 6px
+      );
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .page {
+      width: min(1280px, 96%);
+      margin: 0 auto;
+      padding: 18px 0 32px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .back-link {
+      color: #050510;
+      background: var(--yellow);
+      border: 2px solid var(--cyan);
+      text-decoration: none;
+      padding: 9px 13px;
+      font-weight: bold;
+      box-shadow: 4px 4px 0 var(--pink);
+      text-transform: uppercase;
+    }
+
+    .brand {
+      color: var(--green);
+      font-weight: bold;
+      text-shadow: 0 0 12px var(--green);
+      text-align: right;
+    }
+
+    header {
+      border: 3px solid var(--cyan);
+      background: rgba(5, 7, 18, 0.82);
+      padding: 18px 22px;
+      margin-bottom: 16px;
+      box-shadow:
+        0 0 18px rgba(34, 247, 255, 0.5),
+        inset 0 0 24px rgba(255, 43, 214, 0.16);
+    }
+
+    .badge {
+      display: inline-block;
+      color: #050510;
+      background: var(--green);
+      padding: 6px 9px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      box-shadow: 4px 4px 0 var(--pink);
+      text-transform: uppercase;
+      font-size: 0.8rem;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 4rem);
+      text-transform: uppercase;
+      line-height: 0.92;
+      text-shadow:
+        3px 3px 0 var(--pink),
+        -3px -3px 0 var(--cyan),
+        0 0 25px rgba(255, 43, 214, 0.75);
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 850px;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: 1fr 290px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .board-panel,
+    .side-panel {
+      border: 3px solid rgba(34, 247, 255, 0.78);
+      background: var(--panel);
+      box-shadow:
+        0 0 18px rgba(34, 247, 255, 0.25),
+        7px 7px 0 rgba(255, 43, 214, 0.5);
+      padding: 16px;
+    }
+
+    .board-panel::before,
+    .side-panel::before {
+      content: "";
+      display: block;
+      height: 6px;
+      background: linear-gradient(90deg, var(--pink), var(--cyan), var(--yellow), var(--green));
+      margin: -16px -16px 14px;
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .score-card {
+      border: 2px solid var(--purple);
+      background: rgba(143, 77, 255, 0.12);
+      padding: 12px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .score-card h2 {
+      font-size: 1rem;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .score-card .score {
+      font-size: 2rem;
+    }
+
+    .score-card.team-a {
+      border-color: var(--teamA);
+      color: var(--teamA);
+      box-shadow: 0 0 14px rgba(34, 247, 255, 0.25);
+    }
+
+    .score-card.team-b {
+      border-color: var(--teamB);
+      color: var(--teamB);
+      box-shadow: 0 0 14px rgba(255, 43, 214, 0.25);
+    }
+
+    .team-control {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .team-btn,
+    .utility-btn,
+    .answer-btn {
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: 0.18s;
+    }
+
+    .team-btn {
+      padding: 11px;
+      border: 2px solid var(--muted);
+      background: #070815;
+      color: var(--text);
+    }
+
+    .team-btn.active-a {
+      border-color: var(--teamA);
+      color: #050510;
+      background: var(--teamA);
+      box-shadow: 4px 4px 0 var(--pink);
+    }
+
+    .team-btn.active-b {
+      border-color: var(--teamB);
+      color: #050510;
+      background: var(--teamB);
+      box-shadow: 4px 4px 0 var(--cyan);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    .tile {
+      min-height: 92px;
+      border: 3px solid var(--cyan);
+      background:
+        linear-gradient(135deg, rgba(34, 247, 255, 0.12), rgba(255, 43, 214, 0.08)),
+        #080a18;
+      color: var(--text);
+      padding: 10px;
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 rgba(255, 43, 214, 0.5);
+      text-transform: uppercase;
+      line-height: 1.25;
+      transition: 0.18s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tile:hover:not(:disabled) {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 rgba(255, 43, 214, 0.75);
+      border-color: var(--yellow);
+    }
+
+    .tile:disabled {
+      cursor: not-allowed;
+    }
+
+    .tile.captured-a {
+      background: rgba(34, 247, 255, 0.28);
+      border-color: var(--teamA);
+      color: var(--teamA);
+      box-shadow: 0 0 18px rgba(34, 247, 255, 0.4);
+    }
+
+    .tile.captured-b {
+      background: rgba(255, 43, 214, 0.28);
+      border-color: var(--teamB);
+      color: var(--teamB);
+      box-shadow: 0 0 18px rgba(255, 43, 214, 0.4);
+    }
+
+    .tile-number {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--yellow);
+      margin-bottom: 6px;
+    }
+
+    .side-panel h2 {
+      color: var(--yellow);
+      text-transform: uppercase;
+      text-shadow: 2px 2px 0 var(--pink);
+      margin-bottom: 12px;
+    }
+
+    .info-box {
+      border: 2px dashed var(--purple);
+      padding: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 14px;
+      background: rgba(143, 77, 255, 0.08);
+      font-size: 0.9rem;
+    }
+
+    .utility-btn {
+      width: 100%;
+      border: 2px solid var(--yellow);
+      background: var(--pink);
+      color: #050510;
+      padding: 12px;
+      margin-bottom: 10px;
+      box-shadow: 4px 4px 0 var(--cyan);
+    }
+
+    .utility-btn:hover {
+      background: var(--yellow);
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--pink);
+    }
+
+    .winner-box {
+      border: 2px solid var(--green);
+      color: var(--green);
+      padding: 12px;
+      background: rgba(57, 255, 136, 0.08);
+      font-weight: bold;
+      line-height: 1.5;
+      min-height: 52px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.72);
+      z-index: 10;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .question-card {
+      width: min(850px, 96%);
+      border: 3px solid var(--cyan);
+      background: #080a18;
+      padding: 22px;
+      box-shadow:
+        0 0 24px rgba(34, 247, 255, 0.55),
+        10px 10px 0 rgba(255, 43, 214, 0.7);
+    }
+
+    .question-card::before {
+      content: "";
+      display: block;
+      height: 7px;
+      background: linear-gradient(90deg, var(--pink), var(--cyan), var(--yellow), var(--green));
+      margin: -22px -22px 18px;
+    }
+
+    .modal-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      color: var(--yellow);
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .question-text {
+      border: 3px solid var(--yellow);
+      background: rgba(255, 230, 109, 0.08);
+      padding: 20px;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .question-text h2 {
+      font-size: clamp(1.15rem, 2.6vw, 1.8rem);
+      line-height: 1.4;
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .answer-btn {
+      border: 3px solid var(--cyan);
+      background: rgba(5, 8, 22, 0.95);
+      color: var(--text);
+      padding: 15px;
+      text-align: left;
+      min-height: 70px;
+      line-height: 1.4;
+      box-shadow: 4px 4px 0 rgba(255, 43, 214, 0.55);
+    }
+
+    .answer-btn:hover:not(:disabled) {
+      background: rgba(34, 247, 255, 0.12);
+      transform: translate(-2px, -2px);
+    }
+
+    .answer-btn.correct {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(57, 255, 136, 0.18);
+      box-shadow: 0 0 18px rgba(57, 255, 136, 0.5);
+    }
+
+    .answer-btn.wrong {
+      border-color: var(--red);
+      color: var(--red);
+      background: rgba(255, 77, 109, 0.18);
+      box-shadow: 0 0 18px rgba(255, 77, 109, 0.5);
+    }
+
+    .modal-message {
+      border: 2px dashed var(--pink);
+      padding: 12px;
+      color: var(--muted);
+      min-height: 48px;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .close-btn {
+      border: 2px solid var(--yellow);
+      background: var(--cyan);
+      color: #050510;
+      padding: 11px 14px;
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      box-shadow: 4px 4px 0 var(--pink);
+    }
+
+    @media (max-width: 960px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .board {
+        grid-template-columns: repeat(5, 1fr);
+      }
+
+      .tile {
+        min-height: 76px;
+        font-size: 0.78rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .brand {
+        text-align: left;
+      }
+
+      .board {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .answers {
+        grid-template-columns: 1fr;
+      }
+
+      .tile {
+        min-height: 80px;
+      }
+    }
+
+    @media (max-height: 780px) {
+      .page {
+        padding-top: 10px;
+      }
+
+      header {
+        padding: 12px 18px;
+      }
+
+      h1 {
+        font-size: clamp(1.8rem, 3.5vw, 3.2rem);
+      }
+
+      .subtitle {
+        display: none;
+      }
+
+      .tile {
+        min-height: 74px;
+        font-size: 0.78rem;
+      }
+
+      .question-card {
+        padding: 18px;
+      }
+
+      .question-card::before {
+        margin: -18px -18px 14px;
+      }
+
+      .question-text {
+        min-height: 95px;
+        padding: 14px;
+      }
+
+      .answer-btn {
+        min-height: 55px;
+        padding: 11px;
+        font-size: 0.88rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a class="back-link" href="../index.html">← Back to Quiz Hub</a>
+      <div class="brand">By Mr. Gilang Yudha Tama</div>
+    </div>
+
+    <header>
+      <div class="badge">Cyberpunk Territory Mode</div>
+      <h1>Cyber Floor Quiz</h1>
+      <p class="subtitle">
+        Pick a tile, answer the question, and capture the floor. Team with the most neon territory wins.
+      </p>
+    </header>
+
+    <section class="game-layout">
+      <main class="board-panel">
+        <div class="scoreboard">
+          <div class="score-card team-a">
+            <h2>Team A</h2>
+            <div id="scoreA" class="score">0</div>
+          </div>
+
+          <div class="score-card team-b">
+            <h2>Team B</h2>
+            <div id="scoreB" class="score">0</div>
+          </div>
+        </div>
+
+        <div class="team-control">
+          <button id="teamABtn" class="team-btn active-a" onclick="setTeam('A')">Team A Turn</button>
+          <button id="teamBBtn" class="team-btn" onclick="setTeam('B')">Team B Turn</button>
+        </div>
+
+        <div id="board" class="board"></div>
+      </main>
+
+      <aside class="side-panel">
+        <h2>Game Control</h2>
+
+        <div class="info-box">
+          Current turn:
+          <strong id="currentTeamText">Team A</strong>
+          <br><br>
+          Correct answer = capture tile.
+          <br>
+          Wrong answer = tile stays open.
+        </div>
+
+        <button class="utility-btn" onclick="randomTile()">Random Tile</button>
+        <button class="utility-btn" onclick="resetGame()">Reset Game</button>
+        <button class="utility-btn" onclick="finishGame()">Finish Game</button>
+
+        <div id="winnerBox" class="winner-box">
+          Winner result will appear here.
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <div id="questionModal" class="modal">
+    <div class="question-card">
+      <div class="modal-top">
+        <span id="modalCategory">Category</span>
+        <span id="modalTeam">Team A</span>
+      </div>
+
+      <div class="question-text">
+        <h2 id="questionText">Question appears here</h2>
+      </div>
+
+      <div id="answerGrid" class="answers"></div>
+
+      <div id="modalMessage" class="modal-message">
+        Choose the correct answer.
+      </div>
+
+      <div class="modal-actions">
+        <button class="close-btn" onclick="closeModal()">Close</button>
+        <button class="close-btn" onclick="switchTeam()">Switch Team</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tiles = [
+      "Present Tenses",
+      "Past Tenses",
+      "Future Tenses",
+      "Modal Verbs",
+      "If Conditional",
+
+      "Passive Voice",
+      "Reported Speech",
+      "Articles",
+      "Prepositions",
+      "Comparatives",
+
+      "Superlatives",
+      "Synonyms",
+      "Antonyms",
+      "Collocations",
+      "Phrasal Verbs",
+
+      "Word Forms",
+      "Error Correction",
+      "Vocabulary",
+      "Speaking",
+      "TOEFL",
+
+      "IELTS",
+      "Relative Clauses",
+      "Gerunds",
+      "Infinitives",
+      "Mixed Grammar"
+    ];
+
+    const questionBank = {
+      "Present Tenses": [
+        {
+          question: "Choose the correct sentence.",
+          answers: [
+            "She go to school every day.",
+            "She goes to school every day.",
+            "She going to school every day.",
+            "She is go to school every day."
+          ],
+          correct: 1
+        },
+        {
+          question: "Complete the sentence: Listen! The baby _____.",
+          answers: ["cries", "cry", "is crying", "cried"],
+          correct: 2
+        }
+      ],
+
+      "Past Tenses": [
+        {
+          question: "Choose the correct past simple sentence.",
+          answers: [
+            "I go to school yesterday.",
+            "I went to school yesterday.",
+            "I am going to school yesterday.",
+            "I have gone to school yesterday."
+          ],
+          correct: 1
+        },
+        {
+          question: "Complete the sentence: They _____ football when it started to rain.",
+          answers: ["played", "were playing", "have played", "are playing"],
+          correct: 1
+        }
+      ],
+
+      "Future Tenses": [
+        {
+          question: "Choose the correct future sentence.",
+          answers: [
+            "I will call you tomorrow.",
+            "I called you tomorrow.",
+            "I calls you tomorrow.",
+            "I am call you tomorrow."
+          ],
+          correct: 0
+        },
+        {
+          question: "Choose the correct future perfect sentence.",
+          answers: [
+            "By next month, I will finish this course.",
+            "By next month, I will have finished this course.",
+            "By next month, I am finishing this course.",
+            "By next month, I finished this course."
+          ],
+          correct: 1
+        }
+      ],
+
+      "Modal Verbs": [
+        {
+          question: "You _____ wear a helmet when riding a motorcycle.",
+          answers: ["must", "may", "might", "could"],
+          correct: 0
+        },
+        {
+          question: "You _____ have told me earlier. Now it is too late.",
+          answers: ["should", "should have", "must", "can have"],
+          correct: 1
+        }
+      ],
+
+      "If Conditional": [
+        {
+          question: "If it rains, we _____ at home.",
+          answers: ["stay", "stayed", "will stay", "would stayed"],
+          correct: 2
+        },
+        {
+          question: "If I had known, I _____ you.",
+          answers: ["would help", "will help", "would have helped", "helped"],
+          correct: 2
+        }
+      ],
+
+      "Passive Voice": [
+        {
+          question: "Choose the correct passive form: Someone stole my bag.",
+          answers: [
+            "My bag is stole.",
+            "My bag was stolen.",
+            "My bag has stole.",
+            "My bag stolen was."
+          ],
+          correct: 1
+        }
+      ],
+
+      "Reported Speech": [
+        {
+          question: "Choose the correct reported speech.",
+          answers: [
+            "She said she is tired.",
+            "She said she was tired.",
+            "She said she tired.",
+            "She said was tired."
+          ],
+          correct: 1
+        }
+      ],
+
+      "Articles": [
+        {
+          question: "Choose the correct sentence.",
+          answers: [
+            "I saw a elephant.",
+            "I saw an elephant.",
+            "I saw the elephant yesterday every day.",
+            "I saw elephant."
+          ],
+          correct: 1
+        }
+      ],
+
+      "Prepositions": [
+        {
+          question: "Complete the sentence: I am interested _____ learning English.",
+          answers: ["on", "at", "in", "for"],
+          correct: 2
+        }
+      ],
+
+      "Comparatives": [
+        {
+          question: "Choose the correct comparative sentence.",
+          answers: [
+            "This book is more cheaper than that one.",
+            "This book is cheaper than that one.",
+            "This book is cheap than that one.",
+            "This book is cheapest than that one."
+          ],
+          correct: 1
+        }
+      ],
+
+      "Superlatives": [
+        {
+          question: "Choose the correct superlative sentence.",
+          answers: [
+            "She is the smartest student in class.",
+            "She is smarter student in class.",
+            "She is the more smart student.",
+            "She is smartest than me."
+          ],
+          correct: 0
+        }
+      ],
+
+      "Synonyms": [
+        {
+          question: "Which word is closest in meaning to 'huge'?",
+          answers: ["Tiny", "Large", "Weak", "Slow"],
+          correct: 1
+        }
+      ],
+
+      "Antonyms": [
+        {
+          question: "What is the opposite of 'generous'?",
+          answers: ["Kind", "Stingy", "Friendly", "Helpful"],
+          correct: 1
+        }
+      ],
+
+      "Collocations": [
+        {
+          question: "Choose the correct collocation.",
+          answers: [
+            "Make a mistake",
+            "Do a mistake",
+            "Create a mistake",
+            "Take a mistake"
+          ],
+          correct: 0
+        }
+      ],
+
+      "Phrasal Verbs": [
+        {
+          question: "What does 'give up' mean?",
+          answers: [
+            "Continue",
+            "Stop trying",
+            "Start again",
+            "Move faster"
+          ],
+          correct: 1
+        }
+      ],
+
+      "Word Forms": [
+        {
+          question: "Choose the correct word form: His _____ was surprising.",
+          answers: ["decide", "decision", "decisive", "deciding"],
+          correct: 1
+        }
+      ],
+
+      "Error Correction": [
+        {
+          question: "Find the correct sentence.",
+          answers: [
+            "She don't like coffee.",
+            "She doesn't likes coffee.",
+            "She doesn't like coffee.",
+            "She not like coffee."
+          ],
+          correct: 2
+        }
+      ],
+
+      "Vocabulary": [
+        {
+          question: "What does 'rapid' mean?",
+          answers: ["Very slow", "Very fast", "Very weak", "Very old"],
+          correct: 1
+        }
+      ],
+
+      "Speaking": [
+        {
+          question: "Which response is best for giving an opinion?",
+          answers: [
+            "I am agree because yes.",
+            "In my opinion, online learning is useful because it is flexible.",
+            "I think because it is.",
+            "Online learning yes."
+          ],
+          correct: 1
+        }
+      ],
+
+      "TOEFL": [
+        {
+          question: "In TOEFL Speaking, what should you usually do first?",
+          answers: [
+            "Stay silent",
+            "State your opinion clearly",
+            "Only give examples",
+            "Read the question again"
+          ],
+          correct: 1
+        }
+      ],
+
+      "IELTS": [
+        {
+          question: "In IELTS Writing Task 1, what should the overview include?",
+          answers: [
+            "Every single number",
+            "The main trends or key features",
+            "Personal opinion",
+            "A conclusion with advice"
+          ],
+          correct: 1
+        }
+      ],
+
+      "Relative Clauses": [
+        {
+          question: "Choose the correct sentence.",
+          answers: [
+            "The man which lives next door is a doctor.",
+            "The man who lives next door is a doctor.",
+            "The man where lives next door is a doctor.",
+            "The man whose lives next door is a doctor."
+          ],
+          correct: 1
+        }
+      ],
+
+      "Gerunds": [
+        {
+          question: "Choose the correct sentence.",
+          answers: [
+            "I enjoy to swim.",
+            "I enjoy swimming.",
+            "I enjoy swim.",
+            "I enjoy swam."
+          ],
+          correct: 1
+        }
+      ],
+
+      "Infinitives": [
+        {
+          question: "Choose the correct sentence.",
+          answers: [
+            "I want learn English.",
+            "I want learning English.",
+            "I want to learn English.",
+            "I want learned English."
+          ],
+          correct: 2
+        }
+      ],
+
+      "Mixed Grammar": [
+        {
+          question: "Choose the most accurate sentence.",
+          answers: [
+            "Had I known about the meeting, I would have attended it.",
+            "Had I knew about the meeting, I would attend it.",
+            "If I would know, I attended it.",
+            "If I had know, I would have attend it."
+          ],
+          correct: 0
+        }
+      ]
+    };
+
+    let currentTeam = "A";
+    let selectedTileIndex = null;
+    let selectedCategory = null;
+    let locked = false;
+
+    const capturedTiles = Array(tiles.length).fill(null);
+    const usedQuestionIndexes = {};
+
+    const board = document.getElementById("board");
+    const scoreA = document.getElementById("scoreA");
+    const scoreB = document.getElementById("scoreB");
+    const teamABtn = document.getElementById("teamABtn");
+    const teamBBtn = document.getElementById("teamBBtn");
+    const currentTeamText = document.getElementById("currentTeamText");
+    const winnerBox = document.getElementById("winnerBox");
+
+    const questionModal = document.getElementById("questionModal");
+    const modalCategory = document.getElementById("modalCategory");
+    const modalTeam = document.getElementById("modalTeam");
+    const questionText = document.getElementById("questionText");
+    const answerGrid = document.getElementById("answerGrid");
+    const modalMessage = document.getElementById("modalMessage");
+
+    function renderBoard() {
+      board.innerHTML = "";
+
+      tiles.forEach((category, index) => {
+        const button = document.createElement("button");
+        button.className = "tile";
+
+        if (capturedTiles[index] === "A") {
+          button.classList.add("captured-a");
+        }
+
+        if (capturedTiles[index] === "B") {
+          button.classList.add("captured-b");
+        }
+
+        button.innerHTML = `
+          <span class="tile-number">Tile ${index + 1}</span>
+          ${category}
+        `;
+
+        button.onclick = () => openQuestion(index);
+
+        board.appendChild(button);
+      });
+
+      updateScore();
+    }
+
+    function setTeam(team) {
+      currentTeam = team;
+
+      teamABtn.className = "team-btn";
+      teamBBtn.className = "team-btn";
+
+      if (team === "A") {
+        teamABtn.classList.add("active-a");
+      } else {
+        teamBBtn.classList.add("active-b");
+      }
+
+      currentTeamText.textContent = `Team ${team}`;
+    }
+
+    function switchTeam() {
+      setTeam(currentTeam === "A" ? "B" : "A");
+    }
+
+    function openQuestion(index) {
+      if (capturedTiles[index]) {
+        winnerBox.textContent = "That tile has already been captured. Pick another neon square.";
+        return;
+      }
+
+      selectedTileIndex = index;
+      selectedCategory = tiles[index];
+      locked = false;
+
+      const questions = questionBank[selectedCategory];
+
+      if (!questions || questions.length === 0) {
+        winnerBox.textContent = `No questions found for ${selectedCategory}. Add questions in questionBank.`;
+        return;
+      }
+
+      if (usedQuestionIndexes[selectedCategory] === undefined) {
+        usedQuestionIndexes[selectedCategory] = 0;
+      }
+
+      const questionIndex = usedQuestionIndexes[selectedCategory] % questions.length;
+      const question = questions[questionIndex];
+
+      usedQuestionIndexes[selectedCategory]++;
+
+      modalCategory.textContent = selectedCategory;
+      modalTeam.textContent = `Team ${currentTeam}`;
+      questionText.textContent = question.question;
+      modalMessage.textContent = "Choose the correct answer.";
+      answerGrid.innerHTML = "";
+
+      question.answers.forEach((answer, answerIndex) => {
+        const button = document.createElement("button");
+        button.className = "answer-btn";
+        button.innerHTML = `<strong>${String.fromCharCode(65 + answerIndex)}.</strong> ${answer}`;
+        button.onclick = () => chooseAnswer(button, answerIndex, question.correct);
+        answerGrid.appendChild(button);
+      });
+
+      questionModal.classList.add("active");
+    }
+
+    function chooseAnswer(button, selectedAnswer, correctAnswer) {
+      if (locked) return;
+
+      locked = true;
+
+      const buttons = document.querySelectorAll(".answer-btn");
+
+      buttons.forEach((btn) => {
+        btn.disabled = true;
+      });
+
+      if (selectedAnswer === correctAnswer) {
+        button.classList.add("correct");
+        capturedTiles[selectedTileIndex] = currentTeam;
+        modalMessage.textContent = `Correct. Team ${currentTeam} captured the tile. Neon territory secured.`;
+
+        setTimeout(() => {
+          closeModal();
+          renderBoard();
+          switchTeam();
+          checkFullBoard();
+        }, 900);
+      } else {
+        button.classList.add("wrong");
+        buttons[correctAnswer].classList.add("correct");
+        modalMessage.textContent = `Wrong. Team ${currentTeam} failed to capture the tile. The floor remains open.`;
+
+        setTimeout(() => {
+          closeModal();
+          switchTeam();
+        }, 1200);
+      }
+    }
+
+    function closeModal() {
+      questionModal.classList.remove("active");
+    }
+
+    function randomTile() {
+      const openTiles = capturedTiles
+        .map((owner, index) => owner === null ? index : null)
+        .filter((index) => index !== null);
+
+      if (openTiles.length === 0) {
+        finishGame();
+        return;
+      }
+
+      const randomIndex = openTiles[Math.floor(Math.random() * openTiles.length)];
+      openQuestion(randomIndex);
+    }
+
+    function updateScore() {
+      const a = capturedTiles.filter((tile) => tile === "A").length;
+      const b = capturedTiles.filter((tile) => tile === "B").length;
+
+      scoreA.textContent = a;
+      scoreB.textContent = b;
+    }
+
+    function checkFullBoard() {
+      const remaining = capturedTiles.filter((tile) => tile === null).length;
+
+      if (remaining === 0) {
+        finishGame();
+      }
+    }
+
+    function finishGame() {
+      updateScore();
+
+      const a = Number(scoreA.textContent);
+      const b = Number(scoreB.textContent);
+
+      if (a > b) {
+        winnerBox.textContent = `Team A wins with ${a} tiles. Cyber floor conquered.`;
+      } else if (b > a) {
+        winnerBox.textContent = `Team B wins with ${b} tiles. Neon domination achieved.`;
+      } else {
+        winnerBox.textContent = `It is a draw: ${a}-${b}. Classroom civil war continues.`;
+      }
+    }
+
+    function resetGame() {
+      for (let i = 0; i < capturedTiles.length; i++) {
+        capturedTiles[i] = null;
+      }
+
+      for (const key in usedQuestionIndexes) {
+        usedQuestionIndexes[key] = 0;
+      }
+
+      setTeam("A");
+      winnerBox.textContent = "Game reset. The floor is clean again.";
+      renderBoard();
+    }
+
+    renderBoard();
+  </script>
+</body>
+</html>
