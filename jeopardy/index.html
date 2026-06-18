@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Cyberpunk Jeopardy Quiz</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #050510;
+      --panel: rgba(13, 16, 35, 0.94);
+      --cyan: #22f7ff;
+      --pink: #ff2bd6;
+      --yellow: #ffe66d;
+      --green: #39ff88;
+      --red: #ff4d6d;
+      --purple: #8f4dff;
+      --text: #f4f7ff;
+      --muted: #aab2dd;
+      --teamA: #22f7ff;
+      --teamB: #ff2bd6;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Courier New", monospace;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 43, 214, 0.25), transparent 35%),
+        radial-gradient(circle at top right, rgba(34, 247, 255, 0.22), transparent 35%),
+        linear-gradient(180deg, #050510, #11142b 55%, #04040a);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(34, 247, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 43, 214, 0.05) 1px, transparent 1px);
+      background-size: 34px 34px;
+      pointer-events: none;
+      z-index: -2;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.035) 0px,
+        rgba(255, 255, 255, 0.035) 1px,
+        transparent 2px,
+        transparent 6px
+      );
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .page {
+      width: min(1380px, 97%);
+      margin: 0 auto;
+      padding: 14px 0 30px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .back-link {
+      color: #050510;
+      background: var(--yellow);
+      border: 2px solid var(--cyan);
+      text-decoration: none;
+      padding: 9px 13px;
+      font-weight: bold;
+      box-shadow: 4px 4px 0 var(--pink);
+      text-transform: uppercase;
+    }
+
+    .back-link:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--cyan);
+    }
+
+    .brand {
+      color: var(--green);
+      font-weight: bold;
+      text-shadow: 0 0 12px var(--green);
+      text-align: right;
+    }
+
+    header {
+      border: 3px solid var(--cyan);
+      background: rgba(5, 7, 18, 0.82);
+      padding: 16px 20px;
+      margin-bottom: 14px;
+      box-shadow:
+        0 0 18px rgba(34, 247, 255, 0.5),
+        inset 0 0 24px rgba(255, 43, 214, 0.16);
+    }
+
+    .badge {
+      display: inline-block;
+      color: #050510;
+      background: var(--green);
+      padding: 6px 9px;
+      font-weight: bold;
+      margin-bottom: 9px;
+      box-shadow: 4px 4px 0 var(--pink);
+      text-transform: uppercase;
+      font-size: 0.8rem;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4.5vw, 4rem);
+      text-transform: uppercase;
+      line-height: 0.92;
+      text-shadow:
+        3px 3px 0 var(--pink),
+        -3px -3px 0 var(--cyan),
+        0 0 25px rgba(255, 43, 214, 0.75);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 900px;
+      line-height: 1.5;
+      font-size: 0.92rem;
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .board-panel,
+    .side-panel {
+      border: 3px solid rgba(34, 247, 255, 0.78);
+      background: var(--panel);
+      box-shadow:
+        0 0 18px rgba(34, 247, 255, 0.25),
+        7px 7px 0 rgba(255, 43, 214, 0.5);
+      padding: 14px;
+    }
+
+    .board-panel::before,
+    .side-panel::before {
+      content: "";
+      display: block;
+      height: 6px;
+      background: linear-gradient(90deg, var(--pink), var(--cyan), var(--yellow), var(--green));
+      margin: -14px -14px 12px;
+    }
+
+    .level-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .level-btn,
+    .team-btn,
+    .score-btn,
+    .modal-btn {
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: 0.18s;
+    }
+
+    .level-btn {
+      border: 2px solid var(--purple);
+      background: #070815;
+      color: var(--text);
+      padding: 10px;
+      box-shadow: 3px 3px 0 rgba(255, 43, 214, 0.5);
+    }
+
+    .level-btn:hover,
+    .level-btn.active {
+      background: var(--yellow);
+      color: #050510;
+      border-color: var(--cyan);
+      box-shadow: 4px 4px 0 var(--pink);
+      transform: translate(-1px, -1px);
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .score-card {
+      border: 2px solid var(--purple);
+      background: rgba(143, 77, 255, 0.12);
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .score-card h2 {
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .score-card .score {
+      font-size: 1.8rem;
+    }
+
+    .score-card.team-a {
+      border-color: var(--teamA);
+      color: var(--teamA);
+    }
+
+    .score-card.team-b {
+      border-color: var(--teamB);
+      color: var(--teamB);
+    }
+
+    .team-control {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .team-btn {
+      padding: 10px;
+      border: 2px solid var(--muted);
+      background: #070815;
+      color: var(--text);
+    }
+
+    .team-btn.active-a {
+      border-color: var(--teamA);
+      color: #050510;
+      background: var(--teamA);
+      box-shadow: 4px 4px 0 var(--pink);
+    }
+
+    .team-btn.active-b {
+      border-color: var(--teamB);
+      color: #050510;
+      background: var(--teamB);
+      box-shadow: 4px 4px 0 var(--cyan);
+    }
+
+    .board-wrap {
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(10, minmax(95px, 1fr));
+      gap: 8px;
+      min-width: 990px;
+    }
+
+    .category-cell {
+      min-height: 70px;
+      border: 3px solid var(--yellow);
+      background: rgba(255, 230, 109, 0.14);
+      color: var(--yellow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 0.74rem;
+      line-height: 1.2;
+      text-shadow: 2px 2px 0 rgba(255, 43, 214, 0.8);
+    }
+
+    .point-cell {
+      min-height: 76px;
+      border: 3px solid var(--cyan);
+      background:
+        linear-gradient(135deg, rgba(34, 247, 255, 0.12), rgba(255, 43, 214, 0.08)),
+        #080a18;
+      color: var(--cyan);
+      padding: 8px;
+      font-family: inherit;
+      font-weight: bold;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 3px 3px 0 rgba(255, 43, 214, 0.5);
+      transition: 0.18s;
+    }
+
+    .point-cell:hover:not(:disabled) {
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0 rgba(255, 43, 214, 0.75);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .point-cell.used {
+      opacity: 0.18;
+      cursor: not-allowed;
+      color: var(--muted);
+      box-shadow: none;
+    }
+
+    .side-panel h2 {
+      color: var(--yellow);
+      text-transform: uppercase;
+      text-shadow: 2px 2px 0 var(--pink);
+      margin-bottom: 10px;
+      font-size: 1.15rem;
+    }
+
+    .info-box {
+      border: 2px dashed var(--purple);
+      padding: 10px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 12px;
+      background: rgba(143, 77, 255, 0.08);
+      font-size: 0.86rem;
+    }
+
+    .score-btn {
+      width: 100%;
+      border: 2px solid var(--yellow);
+      background: var(--pink);
+      color: #050510;
+      padding: 11px;
+      margin-bottom: 9px;
+      box-shadow: 4px 4px 0 var(--cyan);
+    }
+
+    .score-btn:hover {
+      background: var(--yellow);
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--pink);
+    }
+
+    .winner-box {
+      border: 2px solid var(--green);
+      color: var(--green);
+      padding: 10px;
+      background: rgba(57, 255, 136, 0.08);
+      font-weight: bold;
+      line-height: 1.5;
+      min-height: 50px;
+      font-size: 0.86rem;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 10;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .question-card {
+      width: min(900px, 96%);
+      border: 3px solid var(--cyan);
+      background: #080a18;
+      padding: 22px;
+      box-shadow:
+        0 0 24px rgba(34, 247, 255, 0.55),
+        10px 10px 0 rgba(255, 43, 214, 0.7);
+    }
+
+    .question-card::before {
+      content: "";
+      display: block;
+      height: 7px;
+      background: linear-gradient(90deg, var(--pink), var(--cyan), var(--yellow), var(--green));
+      margin: -22px -22px 18px;
+    }
+
+    .modal-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      color: var(--yellow);
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .question-text {
+      border: 3px solid var(--yellow);
+      background: rgba(255, 230, 109, 0.08);
+      padding: 22px;
+      min-height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .question-text h2 {
+      font-size: clamp(1.2rem, 2.8vw, 2rem);
+      line-height: 1.4;
+    }
+
+    .answer-box {
+      display: none;
+      border: 2px solid var(--green);
+      color: var(--green);
+      background: rgba(57, 255, 136, 0.08);
+      padding: 14px;
+      margin-bottom: 14px;
+      font-weight: bold;
+      line-height: 1.5;
+    }
+
+    .answer-box.active {
+      display: block;
+    }
+
+    .modal-message {
+      border: 2px dashed var(--pink);
+      padding: 12px;
+      color: var(--muted);
+      min-height: 46px;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .modal-btn {
+      border: 2px solid var(--yellow);
+      background: var(--cyan);
+      color: #050510;
+      padding: 11px 14px;
+      box-shadow: 4px 4px 0 var(--pink);
+    }
+
+    .modal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--cyan);
+    }
+
+    .modal-btn.correct {
+      background: var(--green);
+    }
+
+    .modal-btn.wrong {
+      background: var(--red);
+      color: white;
+    }
+
+    @media (max-width: 1050px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .brand {
+        text-align: left;
+      }
+
+      .level-buttons {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .modal-top {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-height: 780px) {
+      .subtitle {
+        display: none;
+      }
+
+      header {
+        padding: 12px 18px;
+      }
+
+      h1 {
+        font-size: clamp(1.7rem, 3.5vw, 3rem);
+      }
+
+      .category-cell {
+        min-height: 58px;
+        font-size: 0.66rem;
+      }
+
+      .point-cell {
+        min-height: 58px;
+        font-size: 1.05rem;
+      }
+
+      .question-text {
+        min-height: 110px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a class="back-link" href="../index.html">← Back to Quiz Hub</a>
+      <div class="brand">By Mr. Gilang Yudha Tama</div>
+    </div>
+
+    <header>
+      <div class="badge">Cyberpunk Jeopardy Mode</div>
+      <h1>Neon Jeopardy</h1>
+      <p class="subtitle">
+        Choose a level, pick a category, answer the clue, and collect points.
+        Correct answers add points. Wrong answers remove points. No mercy in the neon classroom.
+      </p>
+    </header>
+
+    <section class="game-layout">
+      <main class="board-panel">
+        <div class="level-buttons">
+          <button class="level-btn active" onclick="setLevel(1)">Level 1</button>
+          <button class="level-btn" onclick="setLevel(2)">Level 2</button>
+          <button class="level-btn" onclick="setLevel(3)">Level 3</button>
+          <button class="level-btn" onclick="setLevel(4)">Level 4</button>
+        </div>
+
+        <div class="board-wrap">
+          <div id="board" class="board"></div>
+        </div>
+      </main>
+
+      <aside class="side-panel">
+        <h2>Game Control</h2>
+
+        <div class="scoreboard">
+          <div class="score-card team-a">
+            <h2>Team A</h2>
+            <div id="scoreA" class="score">0</div>
+          </div>
+
+          <div class="score-card team-b">
+            <h2>Team B</h2>
+            <div id="scoreB" class="score">0</div>
+          </div>
+        </div>
+
+        <div class="team-control">
+          <button id="teamABtn" class="team-btn active-a" onclick="setTeam('A')">Team A</button>
+          <button id="teamBBtn" class="team-btn" onclick="setTeam('B')">Team B</button>
+        </div>
+
+        <div class="info-box">
+          Current team:
+          <strong id="currentTeamText">Team A</strong>
+          <br><br>
+          Current level:
+          <strong id="currentLevelText">Level 1</strong>
+          <br><br>
+          Pick a tile. Let the team answer. Then click correct or wrong.
+        </div>
+
+        <button class="score-btn" onclick="resetLevel()">Reset Current Level</button>
+        <button class="score-btn" onclick="resetAllTiles()">Reset All Tiles</button>
+        <button class="score-btn" onclick="resetScores()">Reset Scores</button>
+        <button class="score-btn" onclick="finishGame()">Finish Game</button>
+
+        <div id="winnerBox" class="winner-box">
+          Winner result will appear here.
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <div id="questionModal" class="modal">
+    <div class="question-card">
+      <div class="modal-top">
+        <span id="modalCategory">Category</span>
+        <span id="modalValue">100 Points</span>
+        <span id="modalTeam">Team A</span>
+      </div>
+
+      <div class="question-text">
+        <h2 id="questionText">Question appears here</h2>
+      </div>
+
+      <div id="answerBox" class="answer-box">
+        Answer appears here.
+      </div>
+
+      <div id="modalMessage" class="modal-message">
+        Let the team answer first, then reveal the answer.
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn" onclick="showAnswer()">Show Answer</button>
+        <button class="modal-btn correct" onclick="markCorrect()">Correct</button>
+        <button class="modal-btn wrong" onclick="markWrong()">Wrong</button>
+        <button class="modal-btn" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const levels = {
+      "1": {
+            "name": "Level 1",
+            "categories": [
+                  "Food",
+                  "Animals",
+                  "Countries",
+                  "Sports",
+                  "Movies",
+                  "Music",
+                  "Hobbies",
+                  "School Life",
+                  "Video Games",
+                  "Cartoon Characters"
+            ]
+      },
+      "2": {
+            "name": "Level 2",
+            "categories": [
+                  "World Geography",
+                  "Famous Landmarks",
+                  "Science & Nature",
+                  "Technology",
+                  "Space",
+                  "History",
+                  "Literature & Books",
+                  "Business & Money",
+                  "Health & Lifestyle",
+                  "Famous People"
+            ]
+      },
+      "3": {
+            "name": "Level 3",
+            "categories": [
+                  "Academic Vocabulary",
+                  "World History",
+                  "International Politics",
+                  "Economics & Finance",
+                  "Philosophy",
+                  "Psychology",
+                  "Environmental Issues",
+                  "Science & Innovation",
+                  "Law & Society",
+                  "Global Affairs"
+            ]
+      },
+      "4": {
+            "name": "Level 4",
+            "categories": [
+                  "Mixed Idioms",
+                  "Advanced Phrasal Verbs",
+                  "Logical Reasoning",
+                  "World Religions",
+                  "Mythology",
+                  "Famous Speeches",
+                  "Scientific Theories",
+                  "Constitutional Law",
+                  "Geopolitics",
+                  "Ethical Dilemmas"
+            ]
+      }
+};
+
+    const values = [100, 200, 300, 400];
+
+    const questionBank = {
+      "Food": [
+            {
+                  "q": "This yellow fruit is often associated with monkeys.",
+                  "a": "Banana"
+            },
+            {
+                  "q": "This Italian food is usually round and has cheese on top.",
+                  "a": "Pizza"
+            },
+            {
+                  "q": "This meal is usually eaten in the morning.",
+                  "a": "Breakfast"
+            },
+            {
+                  "q": "This Japanese food is made with rice and often raw fish.",
+                  "a": "Sushi"
+            }
+      ],
+      "Animals": [
+            {
+                  "q": "This animal is often called the king of the jungle.",
+                  "a": "Lion"
+            },
+            {
+                  "q": "This African animal is famous for its very long neck.",
+                  "a": "Giraffe"
+            },
+            {
+                  "q": "This sea animal has eight arms.",
+                  "a": "Octopus"
+            },
+            {
+                  "q": "This bird is often used as a symbol of wisdom.",
+                  "a": "Owl"
+            }
+      ],
+      "Countries": [
+            {
+                  "q": "Tokyo is the capital city of this country.",
+                  "a": "Japan"
+            },
+            {
+                  "q": "This country is famous for the Eiffel Tower.",
+                  "a": "France"
+            },
+            {
+                  "q": "Jakarta, Bandung, and Surabaya are cities in this country.",
+                  "a": "Indonesia"
+            },
+            {
+                  "q": "This country is also commonly described as a continent.",
+                  "a": "Australia"
+            }
+      ],
+      "Sports": [
+            {
+                  "q": "This sport is played with a ball, two goals, and eleven players on each team.",
+                  "a": "Football / Soccer"
+            },
+            {
+                  "q": "This sport uses a racket and a shuttlecock.",
+                  "a": "Badminton"
+            },
+            {
+                  "q": "This sport is played on a court with hoops.",
+                  "a": "Basketball"
+            },
+            {
+                  "q": "This combat sport combines striking, wrestling, and submissions.",
+                  "a": "MMA / Mixed Martial Arts"
+            }
+      ],
+      "Movies": [
+            {
+                  "q": "This movie genre is designed to scare the audience.",
+                  "a": "Horror"
+            },
+            {
+                  "q": "This type of movie uses drawn or computer-made characters.",
+                  "a": "Animation"
+            },
+            {
+                  "q": "This movie series features Jedi, Sith, and lightsabers.",
+                  "a": "Star Wars"
+            },
+            {
+                  "q": "This famous film award is also called an Academy Award.",
+                  "a": "Oscar"
+            }
+      ],
+      "Music": [
+            {
+                  "q": "This person performs songs with their voice.",
+                  "a": "Singer"
+            },
+            {
+                  "q": "This musical instrument has black and white keys.",
+                  "a": "Piano"
+            },
+            {
+                  "q": "This music genre is strongly associated with rapping.",
+                  "a": "Hip-hop / Rap"
+            },
+            {
+                  "q": "This person leads an orchestra.",
+                  "a": "Conductor"
+            }
+      ],
+      "Hobbies": [
+            {
+                  "q": "This hobby involves novels, comics, articles, or magazines.",
+                  "a": "Reading"
+            },
+            {
+                  "q": "This hobby involves taking pictures.",
+                  "a": "Photography"
+            },
+            {
+                  "q": "This hobby involves planting and taking care of flowers or vegetables.",
+                  "a": "Gardening"
+            },
+            {
+                  "q": "This hobby involves gathering items such as stamps, coins, or cards.",
+                  "a": "Collecting"
+            }
+      ],
+      "School Life": [
+            {
+                  "q": "Students usually write notes in this object.",
+                  "a": "Notebook"
+            },
+            {
+                  "q": "This person teaches students in class.",
+                  "a": "Teacher"
+            },
+            {
+                  "q": "This is a test usually given at the end of a topic, course, or semester.",
+                  "a": "Exam"
+            },
+            {
+                  "q": "This is schoolwork students complete outside class.",
+                  "a": "Homework"
+            }
+      ],
+      "Video Games": [
+            {
+                  "q": "This Nintendo character is a plumber with a red hat.",
+                  "a": "Mario"
+            },
+            {
+                  "q": "This device is used to control a video game.",
+                  "a": "Controller"
+            },
+            {
+                  "q": "This word often means the final enemy in a game level.",
+                  "a": "Boss"
+            },
+            {
+                  "q": "This game genre allows players to explore a large world freely.",
+                  "a": "Open-world"
+            }
+      ],
+      "Cartoon Characters": [
+            {
+                  "q": "This yellow character lives in a pineapple under the sea.",
+                  "a": "SpongeBob SquarePants"
+            },
+            {
+                  "q": "This mouse is the famous mascot of Disney.",
+                  "a": "Mickey Mouse"
+            },
+            {
+                  "q": "This blue robotic cat comes from the future.",
+                  "a": "Doraemon"
+            },
+            {
+                  "q": "This cartoon family lives in Springfield.",
+                  "a": "The Simpsons"
+            }
+      ],
+      "World Geography": [
+            {
+                  "q": "This is the largest ocean on Earth.",
+                  "a": "Pacific Ocean"
+            },
+            {
+                  "q": "The Sahara Desert is located on this continent.",
+                  "a": "Africa"
+            },
+            {
+                  "q": "Most of the Amazon rainforest is located in this country.",
+                  "a": "Brazil"
+            },
+            {
+                  "q": "This imaginary line divides Earth into the Northern and Southern Hemispheres.",
+                  "a": "The Equator"
+            }
+      ],
+      "Famous Landmarks": [
+            {
+                  "q": "The Eiffel Tower is located in this city.",
+                  "a": "Paris"
+            },
+            {
+                  "q": "The ancient pyramids of Giza are located in this country.",
+                  "a": "Egypt"
+            },
+            {
+                  "q": "The Colosseum is located in this Italian city.",
+                  "a": "Rome"
+            },
+            {
+                  "q": "The Taj Mahal is located in this country.",
+                  "a": "India"
+            }
+      ],
+      "Science & Nature": [
+            {
+                  "q": "This process allows plants to make food using sunlight.",
+                  "a": "Photosynthesis"
+            },
+            {
+                  "q": "At sea level, water boils at this temperature in Celsius.",
+                  "a": "100°C"
+            },
+            {
+                  "q": "This force pulls objects toward Earth.",
+                  "a": "Gravity"
+            },
+            {
+                  "q": "Plants absorb this gas during photosynthesis.",
+                  "a": "Carbon dioxide / CO2"
+            }
+      ],
+      "Technology": [
+            {
+                  "q": "This part is often called the brain of a computer.",
+                  "a": "CPU / Processor"
+            },
+            {
+                  "q": "This global network connects millions of computers and devices.",
+                  "a": "The Internet"
+            },
+            {
+                  "q": "This type of harmful software can damage or control a computer.",
+                  "a": "Malware / Virus"
+            },
+            {
+                  "q": "AI stands for this term.",
+                  "a": "Artificial Intelligence"
+            }
+      ],
+      "Space": [
+            {
+                  "q": "This is the planet we live on.",
+                  "a": "Earth"
+            },
+            {
+                  "q": "This star is at the center of our solar system.",
+                  "a": "The Sun"
+            },
+            {
+                  "q": "This planet is often called the Red Planet.",
+                  "a": "Mars"
+            },
+            {
+                  "q": "This is the galaxy that contains our solar system.",
+                  "a": "The Milky Way"
+            }
+      ],
+      "History": [
+            {
+                  "q": "Ancient pyramids are strongly associated with this civilization.",
+                  "a": "Ancient Egypt"
+            },
+            {
+                  "q": "This man was the first president of the United States.",
+                  "a": "George Washington"
+            },
+            {
+                  "q": "World War II ended in this year.",
+                  "a": "1945"
+            },
+            {
+                  "q": "This wall in Germany fell in 1989.",
+                  "a": "The Berlin Wall"
+            }
+      ],
+      "Literature & Books": [
+            {
+                  "q": "This person writes novels, stories, or books.",
+                  "a": "Author / Writer"
+            },
+            {
+                  "q": "Romeo and Juliet was written by this playwright.",
+                  "a": "William Shakespeare"
+            },
+            {
+                  "q": "This fictional detective lives at 221B Baker Street.",
+                  "a": "Sherlock Holmes"
+            },
+            {
+                  "q": "This type of book tells the story of a real person's life.",
+                  "a": "Biography"
+            }
+      ],
+      "Business & Money": [
+            {
+                  "q": "This is money a person earns from work.",
+                  "a": "Salary / Income"
+            },
+            {
+                  "q": "This means a reduction in price.",
+                  "a": "Discount"
+            },
+            {
+                  "q": "This is money borrowed from a bank or person.",
+                  "a": "Loan"
+            },
+            {
+                  "q": "This is the money left after costs are subtracted from revenue.",
+                  "a": "Profit"
+            }
+      ],
+      "Health & Lifestyle": [
+            {
+                  "q": "Adults are often advised to get about this many hours of sleep each night.",
+                  "a": "7 to 9 hours"
+            },
+            {
+                  "q": "This activity helps strengthen the body and heart.",
+                  "a": "Exercise"
+            },
+            {
+                  "q": "This phrase means eating different kinds of healthy food in proper amounts.",
+                  "a": "Balanced diet"
+            },
+            {
+                  "q": "Meditation, deep breathing, and rest can help reduce this condition.",
+                  "a": "Stress"
+            }
+      ],
+      "Famous People": [
+            {
+                  "q": "This person co-founded Microsoft.",
+                  "a": "Bill Gates"
+            },
+            {
+                  "q": "This scientist is famous for the theory of relativity.",
+                  "a": "Albert Einstein"
+            },
+            {
+                  "q": "This author created the Harry Potter series.",
+                  "a": "J.K. Rowling"
+            },
+            {
+                  "q": "This civil rights leader is famous for the speech 'I Have a Dream'.",
+                  "a": "Martin Luther King Jr."
+            }
+      ],
+      "Academic Vocabulary": [
+            {
+                  "q": "This word means important or meaningful: significant, tiny, random, or silent?",
+                  "a": "Significant"
+            },
+            {
+                  "q": "This verb means to judge or assess the quality or value of something.",
+                  "a": "Evaluate"
+            },
+            {
+                  "q": "This term means a testable explanation or prediction in research.",
+                  "a": "Hypothesis"
+            },
+            {
+                  "q": "This verb means to make a problem less severe or less harmful.",
+                  "a": "Mitigate"
+            }
+      ],
+      "World History": [
+            {
+                  "q": "The Renaissance began mainly in this European country.",
+                  "a": "Italy"
+            },
+            {
+                  "q": "This English document from 1215 limited the power of the king.",
+                  "a": "Magna Carta"
+            },
+            {
+                  "q": "The Cold War was mainly between the United States and this country.",
+                  "a": "The Soviet Union / USSR"
+            },
+            {
+                  "q": "This 1919 treaty formally ended World War I with Germany.",
+                  "a": "Treaty of Versailles"
+            }
+      ],
+      "International Politics": [
+            {
+                  "q": "UN stands for this international organization.",
+                  "a": "United Nations"
+            },
+            {
+                  "q": "This term means managing relations between countries through negotiation.",
+                  "a": "Diplomacy"
+            },
+            {
+                  "q": "This term means a state's authority to govern itself without outside control.",
+                  "a": "Sovereignty"
+            },
+            {
+                  "q": "In the UN Security Council, permanent members can block a resolution using this power.",
+                  "a": "Veto power"
+            }
+      ],
+      "Economics & Finance": [
+            {
+                  "q": "This term means a general rise in prices over time.",
+                  "a": "Inflation"
+            },
+            {
+                  "q": "GDP measures the total value of goods and services produced in an economy.",
+                  "a": "Gross Domestic Product"
+            },
+            {
+                  "q": "This term means the value of the next best alternative you give up when making a choice.",
+                  "a": "Opportunity cost"
+            },
+            {
+                  "q": "This institution usually controls monetary policy and interest rates.",
+                  "a": "Central bank"
+            }
+      ],
+      "Philosophy": [
+            {
+                  "q": "This ancient Greek philosopher is famous for asking questions and was sentenced to death in Athens.",
+                  "a": "Socrates"
+            },
+            {
+                  "q": "This branch of philosophy studies right and wrong behavior.",
+                  "a": "Ethics"
+            },
+            {
+                  "q": "Plato's cave is an allegory about appearance, perception, and this deeper concept.",
+                  "a": "Reality / Truth"
+            },
+            {
+                  "q": "This branch of philosophy studies knowledge and how we know things.",
+                  "a": "Epistemology"
+            }
+      ],
+      "Psychology": [
+            {
+                  "q": "This mental ability lets people store and recall information.",
+                  "a": "Memory"
+            },
+            {
+                  "q": "This school of psychology focuses on observable behavior.",
+                  "a": "Behaviorism"
+            },
+            {
+                  "q": "This term describes mental discomfort from holding conflicting beliefs or actions.",
+                  "a": "Cognitive dissonance"
+            },
+            {
+                  "q": "This psychologist is famous for a hierarchy of human needs.",
+                  "a": "Abraham Maslow"
+            }
+      ],
+      "Environmental Issues": [
+            {
+                  "q": "This term means the long-term heating of Earth's climate system.",
+                  "a": "Global warming"
+            },
+            {
+                  "q": "This term refers to the variety of living species in an ecosystem.",
+                  "a": "Biodiversity"
+            },
+            {
+                  "q": "Solar, wind, and hydro power are examples of this type of energy.",
+                  "a": "Renewable energy"
+            },
+            {
+                  "q": "This term means the total greenhouse gases caused directly or indirectly by a person or activity.",
+                  "a": "Carbon footprint"
+            }
+      ],
+      "Science & Innovation": [
+            {
+                  "q": "Alexander Fleming is famous for discovering this antibiotic.",
+                  "a": "Penicillin"
+            },
+            {
+                  "q": "This academic process checks research quality before publication.",
+                  "a": "Peer review"
+            },
+            {
+                  "q": "This gene-editing technology is often described as molecular scissors.",
+                  "a": "CRISPR"
+            },
+            {
+                  "q": "Quantum computers use this basic unit of information instead of a traditional bit.",
+                  "a": "Qubit"
+            }
+      ],
+      "Law & Society": [
+            {
+                  "q": "These are basic freedoms or protections people are entitled to.",
+                  "a": "Rights"
+            },
+            {
+                  "q": "This principle means everyone, including leaders, is subject to the law.",
+                  "a": "Rule of law"
+            },
+            {
+                  "q": "This legal principle means a person is considered innocent until proven guilty.",
+                  "a": "Presumption of innocence"
+            },
+            {
+                  "q": "This legal principle requires fair procedures before someone is deprived of rights or liberty.",
+                  "a": "Due process"
+            }
+      ],
+      "Global Affairs": [
+            {
+                  "q": "This person is forced to leave their country because of war, persecution, or danger.",
+                  "a": "Refugee"
+            },
+            {
+                  "q": "These are penalties placed on a country to influence its behavior.",
+                  "a": "Sanctions"
+            },
+            {
+                  "q": "This type of aid is given to reduce suffering after crises or disasters.",
+                  "a": "Humanitarian aid"
+            },
+            {
+                  "q": "This term means increasing connection and interaction between countries, economies, and cultures.",
+                  "a": "Globalization"
+            }
+      ],
+      "Mixed Idioms": [
+            {
+                  "q": "This idiom means to make people feel more comfortable at the beginning of a conversation.",
+                  "a": "Break the ice"
+            },
+            {
+                  "q": "This idiom means to say exactly the right thing.",
+                  "a": "Hit the nail on the head"
+            },
+            {
+                  "q": "This idiom means to accidentally or intentionally reveal a secret.",
+                  "a": "Spill the beans"
+            },
+            {
+                  "q": "This idiom means to work or study late into the night.",
+                  "a": "Burn the midnight oil"
+            }
+      ],
+      "Advanced Phrasal Verbs": [
+            {
+                  "q": "This phrasal verb means to mention a topic in conversation.",
+                  "a": "Bring up"
+            },
+            {
+                  "q": "This phrasal verb means to postpone something.",
+                  "a": "Put off"
+            },
+            {
+                  "q": "This phrasal verb means to find or meet something by chance.",
+                  "a": "Come across"
+            },
+            {
+                  "q": "This phrasal verb means to gradually stop using or producing something.",
+                  "a": "Phase out"
+            }
+      ],
+      "Logical Reasoning": [
+            {
+                  "q": "All mammals are warm-blooded. Whales are mammals. Therefore, whales are what?",
+                  "a": "Warm-blooded"
+            },
+            {
+                  "q": "In an argument, this is a reason or statement used to support a conclusion.",
+                  "a": "Premise"
+            },
+            {
+                  "q": "If A implies B, and A is true, then B is true. This valid reasoning pattern is called what?",
+                  "a": "Modus ponens"
+            },
+            {
+                  "q": "If A implies B, and B is true, wrongly concluding A is true is this fallacy.",
+                  "a": "Affirming the consequent"
+            }
+      ],
+      "World Religions": [
+            {
+                  "q": "This is the holy book of Islam.",
+                  "a": "The Qur'an / Quran"
+            },
+            {
+                  "q": "Buddhism is traditionally associated with this founder.",
+                  "a": "Siddhartha Gautama / The Buddha"
+            },
+            {
+                  "q": "This is a Jewish place of worship.",
+                  "a": "Synagogue"
+            },
+            {
+                  "q": "In several Indian religions, this concept refers to actions and their consequences.",
+                  "a": "Karma"
+            }
+      ],
+      "Mythology": [
+            {
+                  "q": "In Greek mythology, this god rules the sky and thunder.",
+                  "a": "Zeus"
+            },
+            {
+                  "q": "In Norse mythology, this god is associated with thunder and a hammer.",
+                  "a": "Thor"
+            },
+            {
+                  "q": "In ancient Egyptian mythology, this god is strongly associated with the sun.",
+                  "a": "Ra"
+            },
+            {
+                  "q": "This Greek hero is famous for completing the Twelve Labors.",
+                  "a": "Heracles / Hercules"
+            }
+      ],
+      "Famous Speeches": [
+            {
+                  "q": "This civil rights leader delivered the famous 'I Have a Dream' speech.",
+                  "a": "Martin Luther King Jr."
+            },
+            {
+                  "q": "This U.S. president delivered the Gettysburg Address.",
+                  "a": "Abraham Lincoln"
+            },
+            {
+                  "q": "This British leader is famous for wartime speeches during World War II.",
+                  "a": "Winston Churchill"
+            },
+            {
+                  "q": "This American revolutionary is associated with the line 'Give me liberty, or give me death!'.",
+                  "a": "Patrick Henry"
+            }
+      ],
+      "Scientific Theories": [
+            {
+                  "q": "Charles Darwin is strongly associated with this theory.",
+                  "a": "Evolution by natural selection"
+            },
+            {
+                  "q": "Albert Einstein is famous for this theory about space, time, and gravity.",
+                  "a": "Theory of relativity"
+            },
+            {
+                  "q": "This theory explains the movement of Earth's large crustal plates.",
+                  "a": "Plate tectonics"
+            },
+            {
+                  "q": "This theory says many diseases are caused by microorganisms.",
+                  "a": "Germ theory of disease"
+            }
+      ],
+      "Constitutional Law": [
+            {
+                  "q": "This is the highest legal document or basic law of a country.",
+                  "a": "Constitution"
+            },
+            {
+                  "q": "This principle divides government power among branches.",
+                  "a": "Separation of powers"
+            },
+            {
+                  "q": "This power allows courts to decide whether laws or actions violate a constitution.",
+                  "a": "Judicial review"
+            },
+            {
+                  "q": "This legal protection allows a detained person to challenge the legality of detention.",
+                  "a": "Habeas corpus"
+            }
+      ],
+      "Geopolitics": [
+            {
+                  "q": "NATO is mainly this type of international alliance.",
+                  "a": "Military alliance"
+            },
+            {
+                  "q": "This term means influencing others through culture, values, and attraction rather than force.",
+                  "a": "Soft power"
+            },
+            {
+                  "q": "This concept describes countries preventing one state from becoming too dominant.",
+                  "a": "Balance of power"
+            },
+            {
+                  "q": "A narrow strategic passage important for trade or military movement is called this.",
+                  "a": "Chokepoint"
+            }
+      ],
+      "Ethical Dilemmas": [
+            {
+                  "q": "This is a situation where a person must choose between difficult moral options.",
+                  "a": "Ethical dilemma"
+            },
+            {
+                  "q": "This famous thought experiment asks whether you would divert a train to save more people.",
+                  "a": "Trolley problem"
+            },
+            {
+                  "q": "This ethical theory focuses on producing the greatest good for the greatest number.",
+                  "a": "Utilitarianism"
+            },
+            {
+                  "q": "This ethical theory focuses on duties, rules, and moral obligations.",
+                  "a": "Deontology"
+            }
+      ]
+};
+
+    let currentLevel = 1;
+    let currentTeam = "A";
+    let selectedCategory = "";
+    let selectedValue = 0;
+    let selectedTileId = "";
+    let usedTiles = {};
+    let scoreAValue = 0;
+    let scoreBValue = 0;
+
+    const board = document.getElementById("board");
+    const scoreA = document.getElementById("scoreA");
+    const scoreB = document.getElementById("scoreB");
+    const teamABtn = document.getElementById("teamABtn");
+    const teamBBtn = document.getElementById("teamBBtn");
+    const currentTeamText = document.getElementById("currentTeamText");
+    const currentLevelText = document.getElementById("currentLevelText");
+    const winnerBox = document.getElementById("winnerBox");
+
+    const questionModal = document.getElementById("questionModal");
+    const modalCategory = document.getElementById("modalCategory");
+    const modalValue = document.getElementById("modalValue");
+    const modalTeam = document.getElementById("modalTeam");
+    const questionText = document.getElementById("questionText");
+    const answerBox = document.getElementById("answerBox");
+    const modalMessage = document.getElementById("modalMessage");
+
+    function getQuestion(category, valueIndex) {
+      return questionBank[category][valueIndex];
+    }
+
+    function renderBoard() {
+      board.innerHTML = "";
+
+      const categories = levels[currentLevel].categories;
+
+      categories.forEach((category) => {
+        const cell = document.createElement("div");
+        cell.className = "category-cell";
+        cell.textContent = category;
+        board.appendChild(cell);
+      });
+
+      values.forEach((value, valueIndex) => {
+        categories.forEach((category, categoryIndex) => {
+          const tileId = `${currentLevel}-${categoryIndex}-${valueIndex}`;
+
+          const button = document.createElement("button");
+          button.className = "point-cell";
+          button.textContent = value;
+
+          if (usedTiles[tileId]) {
+            button.classList.add("used");
+            button.disabled = true;
+            button.textContent = "USED";
+          }
+
+          button.onclick = () => openQuestion(category, value, valueIndex, tileId);
+
+          board.appendChild(button);
+        });
+      });
+    }
+
+    function setLevel(level) {
+      currentLevel = level;
+      currentLevelText.textContent = levels[level].name;
+
+      const buttons = document.querySelectorAll(".level-btn");
+      buttons.forEach((button) => button.classList.remove("active"));
+
+      buttons[level - 1].classList.add("active");
+      winnerBox.textContent = `${levels[level].name} loaded.`;
+
+      renderBoard();
+    }
+
+    function setTeam(team) {
+      currentTeam = team;
+
+      teamABtn.className = "team-btn";
+      teamBBtn.className = "team-btn";
+
+      if (team === "A") {
+        teamABtn.classList.add("active-a");
+      } else {
+        teamBBtn.classList.add("active-b");
+      }
+
+      currentTeamText.textContent = `Team ${team}`;
+    }
+
+    function switchTeam() {
+      setTeam(currentTeam === "A" ? "B" : "A");
+    }
+
+    function openQuestion(category, value, valueIndex, tileId) {
+      selectedCategory = category;
+      selectedValue = value;
+      selectedTileId = tileId;
+
+      const question = getQuestion(category, valueIndex);
+
+      modalCategory.textContent = category;
+      modalValue.textContent = `${value} Points`;
+      modalTeam.textContent = `Team ${currentTeam}`;
+
+      questionText.textContent = question.q;
+      answerBox.textContent = `Answer: ${question.a}`;
+      answerBox.classList.remove("active");
+
+      modalMessage.textContent = "Let the team answer first, then reveal the answer.";
+      questionModal.classList.add("active");
+    }
+
+    function showAnswer() {
+      answerBox.classList.add("active");
+      modalMessage.textContent = "Answer revealed. Mark the team correct or wrong.";
+    }
+
+    function markCorrect() {
+      if (usedTiles[selectedTileId]) return;
+
+      if (currentTeam === "A") {
+        scoreAValue += selectedValue;
+      } else {
+        scoreBValue += selectedValue;
+      }
+
+      usedTiles[selectedTileId] = true;
+      updateScore();
+      closeModal();
+      switchTeam();
+      renderBoard();
+      winnerBox.textContent = `${selectedCategory} for ${selectedValue} completed. Correct answer secured.`;
+    }
+
+    function markWrong() {
+      if (usedTiles[selectedTileId]) return;
+
+      if (currentTeam === "A") {
+        scoreAValue -= selectedValue;
+      } else {
+        scoreBValue -= selectedValue;
+      }
+
+      usedTiles[selectedTileId] = true;
+      updateScore();
+      closeModal();
+      switchTeam();
+      renderBoard();
+      winnerBox.textContent = `${selectedCategory} for ${selectedValue} completed. Wrong answer, points deducted.`;
+    }
+
+    function updateScore() {
+      scoreA.textContent = scoreAValue;
+      scoreB.textContent = scoreBValue;
+    }
+
+    function closeModal() {
+      questionModal.classList.remove("active");
+    }
+
+    function resetLevel() {
+      const newUsedTiles = {};
+
+      for (const tileId in usedTiles) {
+        if (!tileId.startsWith(`${currentLevel}-`)) {
+          newUsedTiles[tileId] = true;
+        }
+      }
+
+      usedTiles = newUsedTiles;
+      winnerBox.textContent = `${levels[currentLevel].name} board reset. Scores stayed the same.`;
+      renderBoard();
+    }
+
+    function resetAllTiles() {
+      usedTiles = {};
+      winnerBox.textContent = "All boards reset. Scores stayed the same.";
+      renderBoard();
+    }
+
+    function resetScores() {
+      scoreAValue = 0;
+      scoreBValue = 0;
+      updateScore();
+      winnerBox.textContent = "Scores reset. Back to zero-zero. Pain.";
+    }
+
+    function finishGame() {
+      if (scoreAValue > scoreBValue) {
+        winnerBox.textContent = `Team A wins ${scoreAValue} to ${scoreBValue}. Neon domination.`;
+      } else if (scoreBValue > scoreAValue) {
+        winnerBox.textContent = `Team B wins ${scoreBValue} to ${scoreAValue}. Cyber victory secured.`;
+      } else {
+        winnerBox.textContent = `Draw game: ${scoreAValue}-${scoreBValue}. Classroom beef unresolved.`;
+      }
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeModal();
+      }
+    });
+
+    renderBoard();
+  </script>
+</body>
+</html>
