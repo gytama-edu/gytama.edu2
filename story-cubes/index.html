@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070613">
+  <title>Story Cube // Neon Speaking Game</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #f4f5ff;
+      --muted: #9ca5cf;
+      --bg: #05040d;
+      --panel: rgba(10, 10, 27, 0.94);
+      --cyan: #29f6ff;
+      --pink: #ff3ac8;
+      --lime: #8aff80;
+      --yellow: #ffe66d;
+      --red: #ff526d;
+      --purple: #9a6cff;
+      --blue: #4d8dff;
+      --shadow-cyan: rgba(41, 246, 255, 0.35);
+      --shadow-pink: rgba(255, 58, 200, 0.35);
+    }
+
+    html { color-scheme: dark; }
+
+    body {
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 14%, rgba(255, 58, 200, 0.18), transparent 28%),
+        radial-gradient(circle at 88% 8%, rgba(41, 246, 255, 0.15), transparent 30%),
+        linear-gradient(145deg, #05040d 0%, #0d0a20 55%, #03030a 100%);
+      font-family: "Courier New", "Lucida Console", monospace;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-image:
+        linear-gradient(rgba(41, 246, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 58, 200, 0.045) 1px, transparent 1px);
+      background-size: 36px 36px;
+      transform: perspective(500px) rotateX(4deg) scale(1.06);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.42;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 3px,
+        rgba(255, 255, 255, 0.035) 4px,
+        rgba(255, 255, 255, 0.035) 5px
+      );
+      mix-blend-mode: screen;
+    }
+
+    button, select { font: inherit; }
+    button { touch-action: manipulation; }
+
+    .app {
+      width: min(1560px, 98vw);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 12px 0 18px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 10px;
+      border: 2px solid rgba(41, 246, 255, 0.75);
+      background: rgba(5, 6, 18, 0.88);
+      box-shadow: 0 0 24px var(--shadow-cyan), inset 0 -4px 0 rgba(255, 58, 200, 0.18);
+      padding: 11px 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .topbar::after {
+      content: "STORY PROTOCOL ONLINE // SPEAK BEFORE THE SIGNAL FLATLINES";
+      position: absolute;
+      right: 12px;
+      bottom: 4px;
+      color: rgba(138, 255, 128, 0.42);
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+    }
+
+    .brand-wrap { min-width: 0; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--bg);
+      background: var(--lime);
+      padding: 3px 8px;
+      font-size: 0.64rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      box-shadow: 4px 4px 0 var(--pink);
+      margin-bottom: 5px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--bg);
+      box-shadow: 0 0 7px var(--bg);
+      animation: blink 1.6s steps(2, end) infinite;
+    }
+
+    h1 {
+      font-size: clamp(1.7rem, 4vw, 3.65rem);
+      line-height: 0.88;
+      letter-spacing: -0.07em;
+      text-transform: uppercase;
+      color: var(--yellow);
+      text-shadow: 3px 3px 0 var(--pink), -2px -2px 0 var(--cyan), 0 0 20px rgba(255, 230, 109, 0.45);
+      white-space: nowrap;
+    }
+
+    h1 span { color: var(--cyan); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding-bottom: 12px;
+    }
+
+    .icon-btn {
+      min-height: 38px;
+      border: 2px solid var(--purple);
+      color: var(--ink);
+      background: #0c0b1d;
+      padding: 7px 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      box-shadow: 3px 3px 0 rgba(255, 58, 200, 0.45);
+    }
+
+    .icon-btn:hover, .icon-btn:focus-visible {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      outline: none;
+      transform: translate(-1px, -1px);
+    }
+
+    .icon-btn.active { background: var(--yellow); color: var(--bg); border-color: var(--pink); }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr) 290px;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 2px solid rgba(41, 246, 255, 0.72);
+      background: var(--panel);
+      box-shadow: 6px 6px 0 rgba(255, 58, 200, 0.3), 0 0 22px rgba(41, 246, 255, 0.12);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      display: block;
+      height: 4px;
+      background: linear-gradient(90deg, var(--pink), var(--cyan), var(--yellow), var(--lime));
+    }
+
+    .panel-inner { padding: 11px; }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--yellow);
+      font-size: 0.78rem;
+      line-height: 1;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 9px;
+      text-shadow: 1px 1px 0 var(--pink);
+    }
+
+    .panel-title small { color: var(--muted); font-size: 0.58rem; text-shadow: none; }
+
+    .section-label {
+      color: var(--cyan);
+      text-transform: uppercase;
+      font-size: 0.64rem;
+      letter-spacing: 0.1em;
+      font-weight: 900;
+      margin: 10px 0 6px;
+    }
+
+    .level-grid, .mode-grid { display: grid; gap: 6px; }
+
+    .choice-btn {
+      display: grid;
+      grid-template-columns: 29px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      border: 1px solid rgba(154, 108, 255, 0.72);
+      background: rgba(154, 108, 255, 0.08);
+      color: var(--ink);
+      text-align: left;
+      padding: 7px;
+      cursor: pointer;
+      transition: 0.16s ease;
+    }
+
+    .choice-btn:hover, .choice-btn:focus-visible {
+      outline: none;
+      border-color: var(--cyan);
+      background: rgba(41, 246, 255, 0.1);
+    }
+
+    .choice-btn.active {
+      border-color: var(--lime);
+      background: rgba(138, 255, 128, 0.12);
+      box-shadow: inset 3px 0 0 var(--lime), 0 0 12px rgba(138, 255, 128, 0.16);
+    }
+
+    .choice-code {
+      display: grid;
+      place-items: center;
+      width: 27px;
+      height: 27px;
+      color: var(--bg);
+      background: var(--purple);
+      font-weight: 900;
+      font-size: 0.75rem;
+      clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+    }
+
+    .choice-btn.active .choice-code { background: var(--lime); }
+    .choice-copy strong { display: block; font-size: 0.69rem; text-transform: uppercase; }
+    .choice-copy span { display: block; color: var(--muted); font-size: 0.56rem; margin-top: 2px; }
+
+    .choice-meta {
+      color: var(--yellow);
+      font-size: 0.62rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .mode-grid .choice-btn { grid-template-columns: 29px 1fr; }
+
+    .shortcut-box, .mission-box {
+      border: 1px dashed rgba(154, 108, 255, 0.7);
+      background: rgba(154, 108, 255, 0.06);
+      padding: 8px;
+      color: var(--muted);
+      font-size: 0.61rem;
+      line-height: 1.55;
+      margin-top: 10px;
+    }
+
+    .shortcut-box kbd {
+      display: inline-block;
+      min-width: 20px;
+      text-align: center;
+      color: var(--yellow);
+      border: 1px solid rgba(255, 230, 109, 0.6);
+      background: #080716;
+      padding: 0 4px;
+      margin-right: 3px;
+    }
+
+    .game-panel { min-height: 664px; }
+    .game-panel .panel-inner { padding: 10px; }
+
+    .mission-bar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: stretch;
+      margin-bottom: 9px;
+    }
+
+    .mission-status {
+      border: 1px solid rgba(138, 255, 128, 0.58);
+      background: rgba(138, 255, 128, 0.07);
+      padding: 7px 9px;
+      min-width: 0;
+    }
+
+    .mission-status span {
+      display: block;
+      color: var(--lime);
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 3px;
+    }
+
+    .mission-status strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.69rem;
+      color: var(--ink);
+    }
+
+    .timer-chip {
+      min-width: 118px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: 2px solid var(--yellow);
+      background: rgba(255, 230, 109, 0.08);
+      color: var(--yellow);
+      box-shadow: inset 0 0 14px rgba(255, 230, 109, 0.08);
+    }
+
+    .timer-chip.warning { border-color: var(--red); color: var(--red); animation: warningPulse 0.7s infinite; }
+    .timer-number { font-size: 1.7rem; line-height: 1; font-weight: 900; text-shadow: 2px 2px 0 var(--pink); }
+    .timer-unit { font-size: 0.55rem; text-transform: uppercase; }
+
+    .cubes-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-areas:
+        "character character place place object object"
+        ". problem problem twist twist .";
+      gap: 9px;
+      min-height: 370px;
+      align-content: center;
+    }
+
+    .cube:nth-child(1) { grid-area: character; --cube-color: var(--cyan); --cube-shadow: rgba(41, 246, 255, 0.34); }
+    .cube:nth-child(2) { grid-area: place; --cube-color: var(--pink); --cube-shadow: rgba(255, 58, 200, 0.34); }
+    .cube:nth-child(3) { grid-area: object; --cube-color: var(--yellow); --cube-shadow: rgba(255, 230, 109, 0.3); }
+    .cube:nth-child(4) { grid-area: problem; --cube-color: var(--red); --cube-shadow: rgba(255, 82, 109, 0.3); }
+    .cube:nth-child(5) { grid-area: twist; --cube-color: var(--lime); --cube-shadow: rgba(138, 255, 128, 0.3); }
+
+    .cube {
+      min-height: 164px;
+      border: 2px solid var(--cube-color);
+      background:
+        linear-gradient(135deg, var(--cube-shadow), transparent 38%),
+        #09091a;
+      box-shadow: 5px 5px 0 var(--cube-shadow), inset 0 0 20px rgba(255, 255, 255, 0.018);
+      padding: 10px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: opacity 0.25s ease, transform 0.25s ease, filter 0.25s ease;
+    }
+
+    .cube::before {
+      content: "";
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 12px;
+      height: 12px;
+      border-top: 2px solid var(--cube-color);
+      border-right: 2px solid var(--cube-color);
+    }
+
+    .cube.rolling { animation: cubeRoll 0.52s steps(5, end); }
+    .cube.locked { opacity: 0.24; filter: grayscale(1); transform: scale(0.97); }
+    .cube.current { animation: currentGlow 1.3s ease-in-out infinite alternate; }
+    .cube.used { opacity: 0.62; }
+
+    .cube-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+
+    .cube-type {
+      color: var(--cube-color);
+      font-size: 0.64rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 900;
+    }
+
+    .cube-index {
+      color: var(--bg);
+      background: var(--cube-color);
+      font-size: 0.58rem;
+      font-weight: 900;
+      padding: 2px 5px;
+    }
+
+    .cube-prompt {
+      color: var(--ink);
+      font-size: clamp(0.92rem, 1.5vw, 1.28rem);
+      line-height: 1.18;
+      font-weight: 900;
+      text-align: center;
+      text-wrap: balance;
+      margin: 7px 0;
+      text-shadow: 0 0 11px var(--cube-shadow);
+    }
+
+    .cube-hint {
+      color: var(--muted);
+      font-size: 0.53rem;
+      text-align: right;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .challenge-strip {
+      display: none;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 9px;
+      border: 2px solid var(--purple);
+      background: linear-gradient(90deg, rgba(154, 108, 255, 0.2), rgba(255, 58, 200, 0.08));
+      padding: 8px 10px;
+      margin-top: 9px;
+      box-shadow: inset 4px 0 0 var(--pink);
+    }
+
+    .challenge-strip.visible { display: grid; }
+    .challenge-tag { color: var(--bg); background: var(--purple); padding: 4px 7px; font-size: 0.58rem; font-weight: 900; text-transform: uppercase; }
+    .challenge-text { color: var(--ink); font-size: 0.73rem; font-weight: 900; }
+
+    .chain-strip {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border: 1px dashed rgba(41, 246, 255, 0.7);
+      color: var(--cyan);
+      background: rgba(41, 246, 255, 0.05);
+      padding: 7px 9px;
+      margin-top: 9px;
+    }
+
+    .chain-strip.visible { display: flex; }
+    .chain-copy { font-size: 0.64rem; text-transform: uppercase; font-weight: 900; }
+    .chain-copy strong { color: var(--yellow); }
+
+    .control-deck {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.35fr) repeat(3, minmax(95px, 0.65fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .action-btn {
+      min-height: 48px;
+      border: 2px solid var(--cyan);
+      background: #0b0b1b;
+      color: var(--cyan);
+      cursor: pointer;
+      text-transform: uppercase;
+      font-weight: 900;
+      font-size: 0.68rem;
+      letter-spacing: 0.05em;
+      box-shadow: 4px 4px 0 rgba(154, 108, 255, 0.55);
+      transition: 0.15s ease;
+    }
+
+    .action-btn:hover, .action-btn:focus-visible {
+      outline: none;
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 rgba(255, 58, 200, 0.6);
+    }
+
+    .action-btn.primary {
+      color: var(--bg);
+      background: var(--pink);
+      border-color: var(--yellow);
+      font-size: 0.85rem;
+      box-shadow: 5px 5px 0 var(--cyan);
+    }
+
+    .action-btn.start { color: var(--bg); background: var(--lime); border-color: var(--lime); }
+    .action-btn.danger { color: var(--red); border-color: var(--red); }
+    .action-btn:disabled { cursor: not-allowed; opacity: 0.35; filter: grayscale(0.8); transform: none; }
+
+    .chain-next-btn {
+      border: 1px solid var(--yellow);
+      background: var(--yellow);
+      color: var(--bg);
+      padding: 5px 8px;
+      font-weight: 900;
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .score-display {
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 8px;
+    }
+
+    .score-number {
+      display: grid;
+      place-items: center;
+      height: 76px;
+      border: 2px solid var(--yellow);
+      background: rgba(255, 230, 109, 0.08);
+      color: var(--yellow);
+      font-size: 2.55rem;
+      font-weight: 900;
+      text-shadow: 3px 3px 0 var(--pink);
+    }
+
+    .score-copy strong { display: block; color: var(--ink); font-size: 0.73rem; text-transform: uppercase; }
+    .score-copy span { display: block; color: var(--muted); font-size: 0.59rem; line-height: 1.35; margin-top: 4px; }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .score-btn {
+      min-height: 31px;
+      border: 1px solid rgba(154, 108, 255, 0.7);
+      background: rgba(154, 108, 255, 0.08);
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 900;
+      font-size: 0.69rem;
+    }
+
+    .score-btn:hover, .score-btn:focus-visible { outline: none; border-color: var(--yellow); color: var(--yellow); }
+    .score-btn.active { color: var(--bg); background: var(--yellow); border-color: var(--yellow); box-shadow: 2px 2px 0 var(--pink); }
+    .score-btn:last-child { grid-column: span 2; }
+
+    .save-score {
+      width: 100%;
+      min-height: 38px;
+      border: 2px solid var(--lime);
+      background: rgba(138, 255, 128, 0.12);
+      color: var(--lime);
+      text-transform: uppercase;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 3px 3px 0 rgba(255, 58, 200, 0.45);
+    }
+
+    .save-score:hover, .save-score:focus-visible { outline: none; color: var(--bg); background: var(--lime); }
+    .save-score:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 0; }
+
+    .stat {
+      border: 1px solid rgba(41, 246, 255, 0.4);
+      background: rgba(41, 246, 255, 0.05);
+      padding: 7px;
+      text-align: center;
+    }
+
+    .stat span { display: block; color: var(--muted); font-size: 0.52rem; text-transform: uppercase; }
+    .stat strong { display: block; color: var(--cyan); font-size: 1.12rem; margin-top: 2px; }
+
+    .history {
+      display: grid;
+      gap: 5px;
+      max-height: 156px;
+      overflow: auto;
+      scrollbar-color: var(--purple) transparent;
+    }
+
+    .history-empty {
+      border: 1px dashed rgba(154, 108, 255, 0.5);
+      color: var(--muted);
+      padding: 10px;
+      font-size: 0.58rem;
+      text-align: center;
+    }
+
+    .history-item {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 6px;
+      border-left: 3px solid var(--purple);
+      background: rgba(154, 108, 255, 0.08);
+      padding: 5px 6px;
+      font-size: 0.56rem;
+    }
+
+    .history-round { color: var(--muted); }
+    .history-info { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-score { color: var(--yellow); font-weight: 900; font-size: 0.72rem; }
+
+    .how-to {
+      display: grid;
+      gap: 7px;
+      counter-reset: steps;
+    }
+
+    .how-step {
+      counter-increment: steps;
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 7px;
+      align-items: start;
+      color: var(--muted);
+      font-size: 0.58rem;
+      line-height: 1.35;
+    }
+
+    .how-step::before {
+      content: counter(steps, decimal-leading-zero);
+      color: var(--bg);
+      background: var(--cyan);
+      padding: 3px 2px;
+      text-align: center;
+      font-weight: 900;
+    }
+
+    .how-step strong { color: var(--ink); text-transform: uppercase; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translate(-50%, 150%);
+      z-index: 10000;
+      max-width: min(560px, 90vw);
+      border: 2px solid var(--lime);
+      background: #090818;
+      color: var(--lime);
+      padding: 10px 15px;
+      font-size: 0.69rem;
+      font-weight: 900;
+      text-align: center;
+      box-shadow: 6px 6px 0 var(--pink), 0 0 20px rgba(138, 255, 128, 0.22);
+      transition: transform 0.25s ease;
+    }
+
+    .toast.visible { transform: translate(-50%, 0); }
+
+    .time-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      display: none;
+      place-items: center;
+      background: rgba(5, 4, 13, 0.9);
+      backdrop-filter: blur(6px);
+    }
+
+    .time-overlay.visible { display: grid; }
+
+    .time-box {
+      width: min(540px, 92vw);
+      border: 4px solid var(--red);
+      background: #090818;
+      padding: 28px;
+      text-align: center;
+      box-shadow: 10px 10px 0 var(--pink), 0 0 35px rgba(255, 82, 109, 0.35);
+    }
+
+    .time-box .signal { color: var(--red); font-size: 0.69rem; text-transform: uppercase; letter-spacing: 0.18em; }
+    .time-box h2 { color: var(--yellow); font-size: clamp(2.5rem, 8vw, 5rem); line-height: 0.95; margin: 8px 0 12px; text-shadow: 4px 4px 0 var(--pink), -3px -3px 0 var(--cyan); }
+    .time-box p { color: var(--muted); font-size: 0.76rem; line-height: 1.45; margin-bottom: 16px; }
+    .time-box button { min-width: 180px; }
+
+    @keyframes blink { 50% { opacity: 0.2; } }
+    @keyframes cubeRoll { 0% { transform: rotate(0) scale(1); filter: hue-rotate(0); } 50% { transform: rotate(2deg) scale(0.96); filter: hue-rotate(90deg); } 100% { transform: rotate(0) scale(1); filter: hue-rotate(0); } }
+    @keyframes currentGlow { from { box-shadow: 4px 4px 0 var(--cube-shadow), 0 0 7px var(--cube-color); } to { box-shadow: 5px 5px 0 var(--cube-shadow), 0 0 22px var(--cube-color); } }
+    @keyframes warningPulse { 50% { box-shadow: 0 0 19px rgba(255, 82, 109, 0.55); } }
+
+    @media (max-width: 1180px) {
+      .workspace { grid-template-columns: 235px minmax(0, 1fr) 235px; }
+      .cubes-grid { min-height: 410px; }
+      .cube { min-height: 180px; }
+      .control-deck { grid-template-columns: 1.25fr repeat(3, 0.7fr); }
+    }
+
+    @media (max-width: 960px) {
+      .workspace { grid-template-columns: 1fr 1fr; }
+      .game-panel { grid-column: 1 / -1; grid-row: 1; min-height: auto; }
+      .setup-panel { grid-column: 1; }
+      .teacher-panel { grid-column: 2; }
+    }
+
+    @media (max-width: 680px) {
+      .app { width: min(96vw, 560px); padding-top: 7px; }
+      .topbar { grid-template-columns: 1fr; gap: 8px; }
+      .topbar::after { display: none; }
+      h1 { white-space: normal; }
+      .header-actions { justify-content: flex-start; padding-bottom: 0; flex-wrap: wrap; }
+      .workspace { grid-template-columns: 1fr; }
+      .game-panel, .setup-panel, .teacher-panel { grid-column: 1; }
+      .setup-panel { grid-row: 2; }
+      .teacher-panel { grid-row: 3; }
+      .mission-bar { grid-template-columns: 1fr; }
+      .timer-chip { min-height: 54px; }
+      .cubes-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas: "character" "place" "object" "problem" "twist";
+        min-height: auto;
+      }
+      .cube { min-height: 125px; }
+      .control-deck { grid-template-columns: 1fr 1fr; }
+      .action-btn.primary { grid-column: 1 / -1; }
+      .action-btn.danger { grid-column: 1 / -1; }
+      .chain-strip { align-items: stretch; flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="eyebrow"><span class="status-dot"></span> Speaking System v1.0</div>
+        <h1>Story <span>Cube</span></h1>
+      </div>
+      <div class="header-actions">
+        <button id="musicBtn" class="icon-btn" type="button" aria-pressed="false">♫ Music: Off</button>
+        <button id="fullscreenBtn" class="icon-btn" type="button">⛶ Fullscreen</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="panel setup-panel" aria-label="Game setup">
+        <div class="panel-inner">
+          <div class="panel-title">01 // Configure <small>choose protocol</small></div>
+
+          <div class="section-label">Speaking Level</div>
+          <div id="levelGrid" class="level-grid">
+            <button class="choice-btn active" type="button" data-level="beginner">
+              <span class="choice-code">L1</span>
+              <span class="choice-copy"><strong>Beginner</strong><span>Simple, concrete prompts</span></span>
+              <span class="choice-meta">60s</span>
+            </button>
+            <button class="choice-btn" type="button" data-level="intermediate">
+              <span class="choice-code">L2</span>
+              <span class="choice-copy"><strong>Intermediate</strong><span>Detailed story situations</span></span>
+              <span class="choice-meta">90s</span>
+            </button>
+            <button class="choice-btn" type="button" data-level="advanced">
+              <span class="choice-code">L3</span>
+              <span class="choice-copy"><strong>Advanced</strong><span>Abstract, complex ideas</span></span>
+              <span class="choice-meta">120s</span>
+            </button>
+          </div>
+
+          <div class="section-label">Game Mode</div>
+          <div id="modeGrid" class="mode-grid">
+            <button class="choice-btn active" type="button" data-mode="classic">
+              <span class="choice-code">C</span>
+              <span class="choice-copy"><strong>Classic Mode</strong><span>Five prompts, one complete story</span></span>
+            </button>
+            <button class="choice-btn" type="button" data-mode="challenge">
+              <span class="choice-code">!</span>
+              <span class="choice-copy"><strong>Challenge Mode</strong><span>Add one language or genre rule</span></span>
+            </button>
+            <button class="choice-btn" type="button" data-mode="chain">
+              <span class="choice-code">∞</span>
+              <span class="choice-copy"><strong>Chain Story</strong><span>One student and prompt at a time</span></span>
+            </button>
+          </div>
+
+          <div class="shortcut-box">
+            <div><kbd>R</kbd> roll cubes</div>
+            <div><kbd>SPACE</kbd> start / pause timer</div>
+            <div><kbd>N</kbd> next chain speaker</div>
+            <div><kbd>M</kbd> music &nbsp; <kbd>F</kbd> fullscreen</div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel game-panel" aria-label="Story cubes game">
+        <div class="panel-inner">
+          <div class="mission-bar">
+            <div class="mission-status" aria-live="polite">
+              <span>Current Protocol</span>
+              <strong id="statusText">Choose a level and mode, then roll the cubes.</strong>
+            </div>
+            <div id="timerChip" class="timer-chip" aria-label="Speaking timer">
+              <span id="timerText" class="timer-number">60</span>
+              <span class="timer-unit">seconds<br>remaining</span>
+            </div>
+          </div>
+
+          <div id="cubesGrid" class="cubes-grid">
+            <article class="cube" data-type="character">
+              <div class="cube-top"><span class="cube-type">Character</span><span class="cube-index">01</span></div>
+              <div class="cube-prompt">Awaiting roll...</div>
+              <div class="cube-hint">Who is in the story?</div>
+            </article>
+            <article class="cube" data-type="place">
+              <div class="cube-top"><span class="cube-type">Place</span><span class="cube-index">02</span></div>
+              <div class="cube-prompt">Awaiting roll...</div>
+              <div class="cube-hint">Where does it happen?</div>
+            </article>
+            <article class="cube" data-type="object">
+              <div class="cube-top"><span class="cube-type">Object</span><span class="cube-index">03</span></div>
+              <div class="cube-prompt">Awaiting roll...</div>
+              <div class="cube-hint">What matters?</div>
+            </article>
+            <article class="cube" data-type="problem">
+              <div class="cube-top"><span class="cube-type">Problem</span><span class="cube-index">04</span></div>
+              <div class="cube-prompt">Awaiting roll...</div>
+              <div class="cube-hint">What goes wrong?</div>
+            </article>
+            <article class="cube" data-type="twist">
+              <div class="cube-top"><span class="cube-type">Twist</span><span class="cube-index">05</span></div>
+              <div class="cube-prompt">Awaiting roll...</div>
+              <div class="cube-hint">How does it change?</div>
+            </article>
+          </div>
+
+          <div id="challengeStrip" class="challenge-strip" aria-live="polite">
+            <span class="challenge-tag">Bonus Challenge</span>
+            <span id="challengeText" class="challenge-text">Roll the cubes to receive a challenge.</span>
+          </div>
+
+          <div id="chainStrip" class="chain-strip" aria-live="polite">
+            <span id="chainText" class="chain-copy">Student <strong>1</strong> uses the Character prompt.</span>
+            <button id="nextStudentBtn" class="chain-next-btn" type="button">Next Student →</button>
+          </div>
+
+          <div class="control-deck">
+            <button id="rollBtn" class="action-btn primary" type="button">◆ Roll Cubes</button>
+            <button id="timerBtn" class="action-btn start" type="button" disabled>▶ Start Timer</button>
+            <button id="pauseBtn" class="action-btn" type="button" disabled>Ⅱ Pause</button>
+            <button id="resetBtn" class="action-btn danger" type="button">↺ Reset Round</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel teacher-panel" aria-label="Teacher score panel">
+        <div class="panel-inner">
+          <div class="panel-title">02 // Teacher Score <small>out of ten</small></div>
+
+          <div class="score-display">
+            <div id="scoreNumber" class="score-number">0</div>
+            <div class="score-copy">
+              <strong>Round Score</strong>
+              <span>Consider fluency, prompt use, clarity, and creativity.</span>
+            </div>
+          </div>
+
+          <div id="scoreGrid" class="score-grid" aria-label="Choose score from zero to ten"></div>
+          <button id="saveScoreBtn" class="save-score" type="button" disabled>Save Round Score</button>
+
+          <div class="stats-row">
+            <div class="stat"><span>Rounds</span><strong id="roundsText">0</strong></div>
+            <div class="stat"><span>Average</span><strong id="averageText">—</strong></div>
+          </div>
+
+          <div class="section-label">Session Log</div>
+          <div id="historyList" class="history">
+            <div class="history-empty">No scored rounds yet.</div>
+          </div>
+
+          <div class="section-label">How to Play</div>
+          <div class="how-to">
+            <div class="how-step"><div><strong>Configure.</strong> Pick a level and speaking mode.</div></div>
+            <div class="how-step"><div><strong>Roll.</strong> Generate five story prompts.</div></div>
+            <div class="how-step"><div><strong>Speak.</strong> Use every visible prompt before time ends.</div></div>
+            <div class="how-step"><div><strong>Score.</strong> The teacher gives 0–10 and saves the round.</div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div id="timeOverlay" class="time-overlay" role="dialog" aria-modal="true" aria-labelledby="timeTitle">
+    <div class="time-box">
+      <div class="signal">Transmission ended</div>
+      <h2 id="timeTitle">Time!</h2>
+      <p>Finish the sentence, take a breath, and let the teacher score the story.</p>
+      <button id="closeTimeBtn" class="action-btn primary" type="button">Score This Story</button>
+    </div>
+  </div>
+
+  <script>
+    const LEVELS = {
+      beginner: { label: "Level 1 • Beginner", seconds: 60 },
+      intermediate: { label: "Level 2 • Intermediate", seconds: 90 },
+      advanced: { label: "Level 3 • Advanced", seconds: 120 }
+    };
+
+    const MODE_LABELS = {
+      classic: "Classic Mode",
+      challenge: "Challenge Mode",
+      chain: "Chain Story Mode"
+    };
+
+    const TYPES = ["character", "place", "object", "problem", "twist"];
+    const TYPE_LABELS = { character: "Character", place: "Place", object: "Object", problem: "Problem", twist: "Twist" };
+
+    const PROMPTS = {
+      beginner: {
+        character: [
+          "a curious cat", "a nervous student", "a friendly robot", "a sleepy teacher", "a brave child",
+          "a lost puppy", "a funny chef", "a shy superhero", "a clever monkey", "a new student",
+          "an old fisherman", "a talking bird", "a busy doctor", "a tiny dragon", "a forgetful king",
+          "a young detective", "a lonely astronaut", "a dancing ghost"
+        ],
+        place: [
+          "a neon train station", "a quiet school", "a crowded market", "a dark forest", "a small island",
+          "a colorful kitchen", "an empty classroom", "a busy hospital", "a secret garden", "a rainy bus stop",
+          "a strange museum", "a rooftop at night", "a noisy restaurant", "an old castle", "a sunny beach",
+          "a city library", "a hidden cave", "a space station"
+        ],
+        object: [
+          "a broken phone", "a red umbrella", "a glowing notebook", "a mysterious key", "a giant sandwich",
+          "an old camera", "a blue backpack", "a magic pencil", "a tiny box", "a lost ticket",
+          "a talking clock", "a golden coin", "a strange map", "a green bottle", "a robot toy",
+          "a pair of glasses", "a secret letter", "a flying bicycle"
+        ],
+        problem: [
+          "missed the last train", "lost the homework", "could not find the way home", "the lights suddenly turned off", "forgot an important name",
+          "the door would not open", "someone took the wrong bag", "it started raining inside", "the food disappeared", "the map was upside down",
+          "the bus went the wrong way", "a loud noise scared everyone", "the key broke", "the class started early", "the phone had no battery",
+          "the bridge was closed", "the pet ran away", "nobody could stop laughing"
+        ],
+        twist: [
+          "the phone starts talking", "the cat becomes the teacher", "everything was a dream", "the object begins to fly", "a friend was hiding nearby",
+          "the villain wants to help", "the smallest person saves everyone", "the door opens into space", "the map changes by itself", "the monster is afraid of children",
+          "time starts moving backward", "the stranger is a family member", "the treasure is made of candy", "the robot tells a joke", "everyone changes color",
+          "the problem becomes a game", "the letter is from the future", "the story happens again"
+        ]
+      },
+      intermediate: {
+        character: [
+          "an inventor with a terrible memory", "a teenager who can hear machines", "a detective afraid of the dark", "a famous singer in disguise", "a taxi driver from the future",
+          "a scientist who hates technology", "a librarian with a secret identity", "a competitive twin", "a travel blogger with no passport", "a magician who lost every trick",
+          "an athlete recovering from failure", "a journalist chasing an impossible story", "a musician who cannot hear", "an exchange student with a hidden talent", "a chef searching for one rare ingredient",
+          "a security guard on the first night", "a gamer trapped outside the screen", "a pilot who has never flown"
+        ],
+        place: [
+          "an abandoned amusement park", "a city where it never gets dark", "an underground shopping center", "a hotel built inside a mountain", "a floating night market",
+          "a laboratory beneath the school", "a train that never stops", "a village with no internet", "an airport during a storm", "a crowded music festival",
+          "a museum after closing time", "a restaurant run by robots", "a frozen tropical island", "a silent football stadium", "a street that appears once a year",
+          "a cinema showing tomorrow's news", "an apartment above the clouds", "a border town during a blackout"
+        ],
+        object: [
+          "a watch that pauses time", "a suitcase full of identical keys", "a camera that shows hidden emotions", "a ticket with no destination", "a pair of shoes that chooses the route",
+          "a voice message from ten years ago", "a book with one blank final page", "a vending machine that gives advice", "a compass pointing at people", "a cracked virtual-reality headset",
+          "a recipe written in code", "a drone carrying the wrong package", "a mirror that changes memories", "a password nobody remembers", "a medal with another person's name",
+          "a newspaper dated next week", "a plant that reacts to lies", "a battery that never runs out"
+        ],
+        problem: [
+          "the same five minutes keep repeating", "someone has swapped every sign in the city", "the main character is blamed for a mistake", "an important message reaches the wrong person", "the only exit disappears",
+          "everyone suddenly speaks a different language", "the promised prize is missing", "a secret is accidentally broadcast", "the weather changes every minute", "the group must choose between two risky plans",
+          "all digital records have vanished", "the final train leaves in ten minutes", "a harmless joke creates a serious misunderstanding", "the instructions contradict each other", "the main character loses their voice",
+          "a trusted friend refuses to help", "the building begins to move", "the evidence points to the wrong suspect"
+        ],
+        twist: [
+          "the supposed enemy created the rescue plan", "the object belongs to the main character's future self", "the entire town already knows the secret", "the missing person was protecting everyone", "the accident was actually a test",
+          "the narrator has misunderstood everything", "the safest choice causes the biggest danger", "the message was meant for someone in the audience", "the machine is more emotional than the humans", "two characters discover they share the same memory",
+          "the final clue has been visible from the beginning", "success requires breaking an old promise", "the place is a detailed movie set", "the main character caused the original problem", "the story's villain is only a child",
+          "the countdown is measuring something good", "the object works only when nobody watches", "the ending becomes the beginning of another story"
+        ]
+      },
+      advanced: {
+        character: [
+          "a diplomat whose private beliefs oppose the mission", "an AI researcher questioning their own memories", "a whistleblower who may be unreliable", "a historian able to alter one recorded event", "a leader admired for a decision they regret",
+          "an artist whose work predicts social change", "a linguist who discovers an untranslatable warning", "an entrepreneur forced to choose ethics over survival", "a judge facing a case with no legal precedent", "a climate scientist accused of hiding good news",
+          "a journalist interviewing their future replacement", "a psychologist who can remove one emotion", "an engineer responsible for an autonomous city", "a refugee carrying evidence that could end a conflict", "a teacher whose students remember a different history",
+          "a politician who can hear public opinion as music", "a philosopher hired to advise a machine", "an archaeologist who recognizes a modern artifact in ancient ruins"
+        ],
+        place: [
+          "a city governed entirely by public votes", "a courtroom inside a simulated reality", "a research colony beneath a melting glacier", "a border that moves every midnight", "a university where questions are more valuable than answers",
+          "a society that has outlawed anonymity", "an orbital archive containing forgotten histories", "a desert settlement powered by human movement", "a conference where every statement becomes legally binding", "a museum that returns stolen memories",
+          "a nation preparing for its final election", "a marketplace where people trade years of their lives", "a laboratory testing whether machines can feel guilt", "an island visible only through digital maps", "a library that removes dangerous ideas from books",
+          "a city rebuilding after communication collapses", "a peace summit attended by former enemies", "an archaeological site beneath a modern capital"
+        ],
+        object: [
+          "an algorithm that predicts moral choices", "a treaty signed by a country that does not exist", "a device that translates intention instead of language", "a prototype that improves itself while being observed", "a dataset containing one impossible pattern",
+          "a constitution written for an artificial society", "a recording that changes with each listener", "a vaccine against a memory", "a map showing the consequences of every route", "a contract that cannot be broken but can be reinterpreted",
+          "a battery powered by disagreement", "an artifact made from an unknown future material", "a neural network trained on dreams", "a headline that becomes true after publication", "a currency based on personal reputation",
+          "a blueprint for a building larger inside than outside", "a microphone that detects dishonesty", "a photograph of an event that never occurred"
+        ],
+        problem: [
+          "the evidence is accurate but ethically impossible to reveal", "solving the crisis would erase an entire culture", "two equally reliable sources contradict each other", "the system achieves fairness by removing freedom", "a successful innovation makes its creators unnecessary",
+          "the public demands certainty where none is possible", "peace depends on maintaining a shared lie", "the only legal solution is clearly unjust", "the prediction causes the event it warned against", "every available choice benefits one group and harms another",
+          "the technology works but nobody understands why", "the historical record changes during the investigation", "the solution requires trusting an admitted enemy", "scarcity has been artificially created to preserve power", "the main character's identity depends on false memories",
+          "the emergency ends before society is ready to return to normal", "the group agrees on facts but not their meaning", "preventing disaster would create a permanent surveillance system"
+        ],
+        twist: [
+          "the conflict exists only because both sides use different definitions", "the machine has been protecting human freedom by disobeying orders", "the discovery proves the investigation itself was the experiment", "the narrator is a collective rather than an individual", "the apparent failure is the intended ethical outcome",
+          "the future has been sending evidence to avoid being created", "the minority opinion contains the missing assumption", "the solution succeeds only if nobody receives credit", "the law was designed for this exact impossible case", "the opposing leaders are secretly the same person",
+          "the lost culture chose to erase itself from history", "the object measures belief rather than reality", "the crisis is a rehearsal created by the next generation", "the villain is defending a truth society cannot survive", "the final decision must be made by someone uninvolved",
+          "the audience has been voting on the story's outcome", "the evidence proves everyone remembers the event incorrectly", "the ending reveals that uncertainty was the only honest answer"
+        ]
+      }
+    };
+
+    const CHALLENGES = {
+      beginner: [
+        "Use the past tense.", "Use at least 5 adjectives.", "Add two lines of dialogue.", "Use first, then, and finally.",
+        "Make the story funny.", "Make the story scary.", "Include three different emotions.", "End with a question.",
+        "Use because three times.", "Give every character a name.", "Describe the weather.", "Use at least two sound effects."
+      ],
+      intermediate: [
+        "Use at least 4 sequencing connectors.", "Include direct and reported speech.", "Tell the story in the past continuous and past simple.", "Make the audience trust the wrong character.",
+        "Include a flashback.", "Use 6 vivid adjectives without repeating one.", "Create suspense before revealing the twist.", "Tell the story from two points of view.",
+        "Include a conditional sentence.", "Make the ending both funny and logical.", "Use however, therefore, and although.", "Begin with dialogue and end with narration."
+      ],
+      advanced: [
+        "Use a non-linear timeline without confusing the listener.", "Defend two opposing viewpoints inside the story.", "Include at least 5 advanced discourse markers.", "Use an unreliable narrator.",
+        "Build the story around an ethical dilemma.", "Change the meaning of an early detail at the end.", "Use three different conditional structures.", "Include irony without explaining it directly.",
+        "Tell the story as a formal testimony.", "Avoid using the word 'said' in dialogue.", "Shift naturally between past, present, and future.", "End ambiguously but provide enough evidence for two interpretations."
+      ]
+    };
+
+    const state = {
+      level: "beginner",
+      mode: "classic",
+      prompts: null,
+      challenge: "",
+      timeLeft: 60,
+      timerId: null,
+      running: false,
+      paused: false,
+      rolled: false,
+      chainIndex: 0,
+      score: 0,
+      scoreSaved: false,
+      rounds: [],
+      lastChoices: {},
+      toastId: null
+    };
+
+    const $ = id => document.getElementById(id);
+    const cubeElements = [...document.querySelectorAll(".cube")];
+
+    const AudioSystem = (() => {
+      let context = null;
+      let musicTimer = null;
+      let musicOn = false;
+      let musicStep = 0;
+
+      function init() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return null;
+        if (!context) context = new AudioContext();
+        if (context.state === "suspended") context.resume();
+        return context;
+      }
+
+      function tone(frequency, duration = 0.08, type = "square", volume = 0.035, delay = 0) {
+        const ctx = init();
+        if (!ctx) return;
+        const start = ctx.currentTime + delay;
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(volume, start + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+        oscillator.start(start);
+        oscillator.stop(start + duration + 0.03);
+      }
+
+      function sfx(name) {
+        if (name === "click") tone(520, 0.04, "square", 0.022);
+        if (name === "roll") [196, 294, 440, 659].forEach((f, i) => tone(f, 0.08, "sawtooth", 0.032, i * 0.055));
+        if (name === "start") [330, 494, 659].forEach((f, i) => tone(f, 0.09, "square", 0.035, i * 0.08));
+        if (name === "pause") tone(220, 0.14, "triangle", 0.035);
+        if (name === "next") [600, 880].forEach((f, i) => tone(f, 0.06, "square", 0.028, i * 0.07));
+        if (name === "score") [523, 659, 784].forEach((f, i) => tone(f, 0.1, "square", 0.035, i * 0.08));
+        if (name === "time") [330, 247, 196].forEach((f, i) => tone(f, 0.18, "sawtooth", 0.045, i * 0.16));
+      }
+
+      function musicTick() {
+        const bass = [110, 110, 147, 110, 98, 98, 131, 98];
+        const lead = [440, 523, 659, 523, 392, 494, 587, 494];
+        const index = musicStep % bass.length;
+        tone(bass[index], 0.18, "sawtooth", 0.018);
+        if (musicStep % 2 === 0) tone(lead[index], 0.075, "square", 0.009, 0.02);
+        musicStep++;
+      }
+
+      function toggleMusic() {
+        init();
+        musicOn = !musicOn;
+        if (musicOn) {
+          musicStep = 0;
+          musicTick();
+          musicTimer = setInterval(musicTick, 230);
+        } else {
+          clearInterval(musicTimer);
+          musicTimer = null;
+        }
+        const button = $("musicBtn");
+        button.textContent = musicOn ? "♫ Music: On" : "♫ Music: Off";
+        button.classList.toggle("active", musicOn);
+        button.setAttribute("aria-pressed", String(musicOn));
+      }
+
+      return { init, sfx, toggleMusic };
+    })();
+
+    function randomFrom(items, key) {
+      let index = Math.floor(Math.random() * items.length);
+      if (items.length > 1 && state.lastChoices[key] === index) index = (index + 1 + Math.floor(Math.random() * (items.length - 1))) % items.length;
+      state.lastChoices[key] = index;
+      return items[index];
+    }
+
+    function showToast(message) {
+      clearTimeout(state.toastId);
+      const toast = $("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      state.toastId = setTimeout(() => toast.classList.remove("visible"), 2400);
+    }
+
+    function setLevel(level) {
+      if (!LEVELS[level]) return;
+      stopTimer();
+      state.level = level;
+      state.timeLeft = LEVELS[level].seconds;
+      document.querySelectorAll("[data-level]").forEach(button => button.classList.toggle("active", button.dataset.level === level));
+      updateTimerDisplay();
+      updateStatus(`${LEVELS[level].label} selected. Timer set to ${state.timeLeft} seconds.`);
+      if (state.rolled) rollCubes();
+    }
+
+    function setMode(mode) {
+      if (!MODE_LABELS[mode]) return;
+      stopTimer();
+      state.mode = mode;
+      state.chainIndex = 0;
+      state.timeLeft = LEVELS[state.level].seconds;
+      document.querySelectorAll("[data-mode]").forEach(button => button.classList.toggle("active", button.dataset.mode === mode));
+      $("challengeStrip").classList.toggle("visible", mode === "challenge");
+      $("chainStrip").classList.toggle("visible", mode === "chain");
+      updateTimerDisplay();
+      updateStatus(`${MODE_LABELS[mode]} selected. Roll when ready.`);
+      if (state.rolled) {
+        if (mode === "challenge") state.challenge = randomFrom(CHALLENGES[state.level], `challenge-${state.level}`);
+        renderModeDetails();
+        renderCubes();
+      }
+    }
+
+    function rollCubes() {
+      stopTimer();
+      state.timeLeft = LEVELS[state.level].seconds;
+      state.prompts = {};
+      TYPES.forEach(type => {
+        state.prompts[type] = randomFrom(PROMPTS[state.level][type], `${state.level}-${type}`);
+      });
+      state.challenge = state.mode === "challenge" ? randomFrom(CHALLENGES[state.level], `challenge-${state.level}`) : "";
+      state.chainIndex = 0;
+      state.rolled = true;
+      state.score = 0;
+      state.scoreSaved = false;
+      cubeElements.forEach((cube, index) => {
+        cube.classList.remove("rolling");
+        void cube.offsetWidth;
+        cube.classList.add("rolling");
+        setTimeout(() => cube.classList.remove("rolling"), 560 + index * 25);
+      });
+      renderCubes();
+      renderModeDetails();
+      updateTimerDisplay();
+      $("timerBtn").disabled = false;
+      $("pauseBtn").disabled = true;
+      $("saveScoreBtn").disabled = false;
+      updateScoreButtons();
+      updateStatus(state.mode === "chain" ? "Student 1 begins with the Character prompt." : "Prompts locked. Start the timer and tell the story!");
+      AudioSystem.sfx("roll");
+    }
+
+    function renderCubes() {
+      cubeElements.forEach((cube, index) => {
+        const type = cube.dataset.type;
+        cube.querySelector(".cube-prompt").textContent = state.prompts ? state.prompts[type] : "Awaiting roll...";
+        cube.classList.remove("locked", "current", "used");
+        if (state.mode === "chain" && state.prompts) {
+          if (index > state.chainIndex) cube.classList.add("locked");
+          if (index === state.chainIndex) cube.classList.add("current");
+          if (index < state.chainIndex) cube.classList.add("used");
+        }
+      });
+    }
+
+    function renderModeDetails() {
+      if (state.mode === "challenge") $("challengeText").textContent = state.challenge || "Roll the cubes to receive a challenge.";
+      if (state.mode === "chain") {
+        const currentType = TYPES[state.chainIndex];
+        const isLast = state.chainIndex === TYPES.length - 1;
+        $("chainText").innerHTML = `Student <strong>${state.chainIndex + 1}</strong> continues using the ${TYPE_LABELS[currentType]} prompt.`;
+        $("nextStudentBtn").textContent = isLast ? "Chain Complete ✓" : "Next Student →";
+        $("nextStudentBtn").disabled = !state.prompts || isLast;
+      }
+    }
+
+    function nextChainStudent() {
+      if (state.mode !== "chain" || !state.prompts) return;
+      if (state.chainIndex >= TYPES.length - 1) return;
+      state.chainIndex++;
+      renderCubes();
+      renderModeDetails();
+      updateStatus(`Student ${state.chainIndex + 1}: add the ${TYPE_LABELS[TYPES[state.chainIndex]]} prompt and continue the same story.`);
+      AudioSystem.sfx("next");
+    }
+
+    function startTimer() {
+      if (!state.rolled) {
+        showToast("Roll the cubes first.");
+        return;
+      }
+      if (state.running && !state.paused) return;
+      if (state.timeLeft <= 0) {
+        state.timeLeft = LEVELS[state.level].seconds;
+        updateTimerDisplay();
+      }
+      clearInterval(state.timerId);
+      state.running = true;
+      state.paused = false;
+      state.timerId = setInterval(timerTick, 1000);
+      $("timerBtn").disabled = true;
+      $("pauseBtn").disabled = false;
+      $("pauseBtn").textContent = "Ⅱ Pause";
+      updateStatus(state.mode === "chain" ? `Timer live. Student ${state.chainIndex + 1}, begin the chain!` : "Timer live. Speak now and use all five prompts!");
+      AudioSystem.sfx("start");
+    }
+
+    function pauseTimer() {
+      if (!state.running) return;
+      state.paused = !state.paused;
+      $("pauseBtn").textContent = state.paused ? "▶ Resume" : "Ⅱ Pause";
+      updateStatus(state.paused ? "Timer paused by the teacher." : "Timer resumed. Continue the story!");
+      AudioSystem.sfx(state.paused ? "pause" : "start");
+    }
+
+    function timerTick() {
+      if (state.paused) return;
+      state.timeLeft--;
+      updateTimerDisplay();
+      if (state.timeLeft > 0 && state.timeLeft <= 5) AudioSystem.sfx("click");
+      if (state.timeLeft <= 0) finishTimer();
+    }
+
+    function finishTimer() {
+      clearInterval(state.timerId);
+      state.timerId = null;
+      state.running = false;
+      state.paused = false;
+      state.timeLeft = 0;
+      updateTimerDisplay();
+      $("timerBtn").disabled = false;
+      $("pauseBtn").disabled = true;
+      $("timeOverlay").classList.add("visible");
+      $("closeTimeBtn").focus();
+      updateStatus("Time ended. Teacher scoring is ready.");
+      AudioSystem.sfx("time");
+    }
+
+    function stopTimer() {
+      clearInterval(state.timerId);
+      state.timerId = null;
+      state.running = false;
+      state.paused = false;
+      $("pauseBtn").disabled = true;
+      $("pauseBtn").textContent = "Ⅱ Pause";
+      $("timerBtn").disabled = !state.rolled;
+    }
+
+    function resetRound() {
+      stopTimer();
+      state.prompts = null;
+      state.challenge = "";
+      state.rolled = false;
+      state.chainIndex = 0;
+      state.timeLeft = LEVELS[state.level].seconds;
+      state.score = 0;
+      state.scoreSaved = false;
+      updateScoreButtons();
+      renderCubes();
+      renderModeDetails();
+      updateTimerDisplay();
+      $("timerBtn").disabled = true;
+      $("saveScoreBtn").disabled = true;
+      $("timeOverlay").classList.remove("visible");
+      updateStatus("Round reset. Roll a new story when ready.");
+      showToast("Round reset // session scores preserved");
+    }
+
+    function updateTimerDisplay() {
+      $("timerText").textContent = state.timeLeft;
+      $("timerChip").classList.toggle("warning", state.timeLeft <= 10 && state.timeLeft > 0);
+    }
+
+    function updateStatus(message) { $("statusText").textContent = message; }
+
+    function setScore(score) {
+      state.score = score;
+      updateScoreButtons();
+      AudioSystem.sfx("click");
+    }
+
+    function updateScoreButtons() {
+      $("scoreNumber").textContent = state.score;
+      document.querySelectorAll(".score-btn").forEach(button => button.classList.toggle("active", Number(button.dataset.score) === state.score));
+    }
+
+    function saveScore() {
+      if (!state.rolled || state.scoreSaved) return;
+      state.rounds.unshift({ score: state.score, level: state.level, mode: state.mode });
+      state.scoreSaved = true;
+      $("saveScoreBtn").disabled = true;
+      renderHistory();
+      AudioSystem.sfx("score");
+      showToast(`Round saved // ${state.score} out of 10`);
+    }
+
+    function renderHistory() {
+      const history = $("historyList");
+      if (!state.rounds.length) {
+        history.innerHTML = '<div class="history-empty">No scored rounds yet.</div>';
+      } else {
+        history.innerHTML = "";
+        state.rounds.slice(0, 12).forEach((round, index) => {
+          const item = document.createElement("div");
+          item.className = "history-item";
+          const roundNumber = state.rounds.length - index;
+          item.innerHTML = `<span class="history-round">#${String(roundNumber).padStart(2, "0")}</span><span class="history-info">${LEVELS[round.level].label.replace("Level ", "L")} • ${MODE_LABELS[round.mode]}</span><span class="history-score">${round.score}/10</span>`;
+          history.appendChild(item);
+        });
+      }
+      $("roundsText").textContent = state.rounds.length;
+      const average = state.rounds.length ? state.rounds.reduce((sum, round) => sum + round.score, 0) / state.rounds.length : null;
+      $("averageText").textContent = average === null ? "—" : average.toFixed(1);
+    }
+
+    async function toggleFullscreen() {
+      try {
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+        else await document.exitFullscreen();
+      } catch (error) {
+        showToast("Fullscreen is not available in this browser.");
+      }
+    }
+
+    function initializeScoreGrid() {
+      const grid = $("scoreGrid");
+      for (let score = 0; score <= 10; score++) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "score-btn";
+        button.dataset.score = score;
+        button.textContent = score;
+        button.setAttribute("aria-label", `Score ${score} out of 10`);
+        button.addEventListener("click", () => setScore(score));
+        grid.appendChild(button);
+      }
+      updateScoreButtons();
+    }
+
+    document.querySelectorAll("[data-level]").forEach(button => button.addEventListener("click", () => setLevel(button.dataset.level)));
+    document.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => setMode(button.dataset.mode)));
+    $("rollBtn").addEventListener("click", rollCubes);
+    $("timerBtn").addEventListener("click", startTimer);
+    $("pauseBtn").addEventListener("click", pauseTimer);
+    $("resetBtn").addEventListener("click", resetRound);
+    $("nextStudentBtn").addEventListener("click", nextChainStudent);
+    $("saveScoreBtn").addEventListener("click", saveScore);
+    $("musicBtn").addEventListener("click", AudioSystem.toggleMusic);
+    $("fullscreenBtn").addEventListener("click", toggleFullscreen);
+    $("closeTimeBtn").addEventListener("click", () => {
+      $("timeOverlay").classList.remove("visible");
+      $("scoreNumber").focus?.();
+    });
+
+    document.addEventListener("pointerdown", AudioSystem.init, { once: true });
+    document.addEventListener("click", event => {
+      if (event.target instanceof Element && event.target.closest("button") && event.target.id !== "musicBtn") AudioSystem.sfx("click");
+    });
+    document.addEventListener("keydown", event => {
+      const target = event.target;
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return;
+      const key = event.key.toLowerCase();
+      if (key === "r") rollCubes();
+      if (key === " ") {
+        event.preventDefault();
+        if (!state.running) startTimer(); else pauseTimer();
+      }
+      if (key === "n") nextChainStudent();
+      if (key === "m") AudioSystem.toggleMusic();
+      if (key === "f") toggleFullscreen();
+      if (key === "escape") $("timeOverlay").classList.remove("visible");
+    });
+
+    initializeScoreGrid();
+    renderModeDetails();
+    updateTimerDisplay();
+  </script>
+</body>
+</html>
