@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CyberPac: Vocabulary Chase</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#050510;--panel:rgba(13,16,35,.94);--cyan:#22f7ff;--pink:#ff2bd6;--yellow:#ffe66d;--green:#39ff88;--red:#ff4d6d;--purple:#8f4dff;--text:#f4f7ff;--muted:#aab2dd}
+    body{min-height:100vh;font-family:"Courier New",monospace;color:var(--text);background:radial-gradient(circle at top left,rgba(255,43,214,.24),transparent 34%),radial-gradient(circle at top right,rgba(34,247,255,.22),transparent 34%),linear-gradient(180deg,#050510,#11142b 55%,#04040a);overflow-x:hidden}
+    body:before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(34,247,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,43,214,.05) 1px,transparent 1px);background-size:34px 34px;pointer-events:none;z-index:-2}
+    body:after{content:"";position:fixed;inset:0;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.035) 0,rgba(255,255,255,.035) 1px,transparent 2px,transparent 6px);pointer-events:none;z-index:-1}
+    .page{width:min(1320px,96%);margin:0 auto;padding:14px 0 28px}.topbar{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:12px}.back-link{color:#050510;background:var(--yellow);border:2px solid var(--cyan);text-decoration:none;padding:9px 13px;font-weight:bold;box-shadow:4px 4px 0 var(--pink);text-transform:uppercase}.brand{color:var(--green);font-weight:bold;text-shadow:0 0 12px var(--green);text-align:right}
+    header{border:3px solid var(--cyan);background:rgba(5,7,18,.82);padding:14px 18px;margin-bottom:14px;box-shadow:0 0 18px rgba(34,247,255,.5),inset 0 0 24px rgba(255,43,214,.16)}.badge{display:inline-block;color:#050510;background:var(--green);padding:6px 9px;font-weight:bold;margin-bottom:8px;box-shadow:4px 4px 0 var(--pink);text-transform:uppercase;font-size:.78rem}h1{font-size:clamp(2rem,4vw,3.8rem);text-transform:uppercase;line-height:.92;text-shadow:3px 3px 0 var(--pink),-3px -3px 0 var(--cyan),0 0 25px rgba(255,43,214,.75);margin-bottom:8px}.subtitle{color:var(--muted);max-width:980px;line-height:1.45;font-size:.9rem}
+    .layout{display:grid;grid-template-columns:1fr 310px;gap:14px;align-items:start}.game-panel,.side-panel{border:3px solid rgba(34,247,255,.78);background:var(--panel);box-shadow:0 0 18px rgba(34,247,255,.25),7px 7px 0 rgba(255,43,214,.5);padding:14px}.game-panel:before,.side-panel:before{content:"";display:block;height:6px;background:linear-gradient(90deg,var(--pink),var(--cyan),var(--yellow),var(--green));margin:-14px -14px 12px}.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}.hud-item{border:2px solid var(--purple);background:rgba(143,77,255,.12);padding:10px;text-align:center;font-weight:bold;color:var(--yellow);font-size:.85rem}.canvas-wrap{width:100%;display:flex;justify-content:center;align-items:center;border:3px solid var(--yellow);background:#02030a;padding:10px;box-shadow:inset 0 0 22px rgba(255,230,109,.12)}canvas{display:block;width:min(100%,780px);aspect-ratio:19/21;image-rendering:pixelated;background:#02030a}
+    .side-panel h2{color:var(--yellow);text-transform:uppercase;text-shadow:2px 2px 0 var(--pink);margin-bottom:10px;font-size:1.15rem}.info-box{border:2px dashed var(--purple);padding:10px;color:var(--muted);line-height:1.5;margin-bottom:12px;background:rgba(143,77,255,.08);font-size:.86rem}.control-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}.btn{border:2px solid var(--yellow);background:var(--pink);color:#050510;padding:10px;font-family:inherit;font-weight:bold;text-transform:uppercase;cursor:pointer;box-shadow:4px 4px 0 var(--cyan);transition:.18s}.btn:hover{background:var(--yellow);transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--pink)}.btn.secondary{background:var(--cyan);box-shadow:4px 4px 0 var(--pink)}.btn.full{grid-column:1/-1}.status-box{border:2px solid var(--green);color:var(--green);padding:10px;background:rgba(57,255,136,.08);font-weight:bold;line-height:1.5;min-height:64px;font-size:.86rem;margin-bottom:12px}.legend{display:grid;gap:8px;font-size:.84rem;color:var(--muted);line-height:1.4}.legend span{color:var(--yellow);font-weight:bold}
+    .mobile-pad{display:none;grid-template-columns:repeat(3,58px);gap:8px;justify-content:center;margin-top:12px}.pad-btn{min-height:50px;border:2px solid var(--cyan);background:rgba(34,247,255,.12);color:var(--cyan);font-family:inherit;font-size:1.2rem;font-weight:bold;box-shadow:3px 3px 0 rgba(255,43,214,.55)}.pad-btn.blank{visibility:hidden}
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.78);z-index:20}.modal.active{display:flex}.question-card,.start-card{width:min(860px,96%);border:3px solid var(--cyan);background:#080a18;padding:22px;box-shadow:0 0 24px rgba(34,247,255,.55),10px 10px 0 rgba(255,43,214,.7)}.question-card:before,.start-card:before{content:"";display:block;height:7px;background:linear-gradient(90deg,var(--pink),var(--cyan),var(--yellow),var(--green));margin:-22px -22px 18px}.modal-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:14px;color:var(--yellow);font-weight:bold;text-transform:uppercase}.question-text{border:3px solid var(--yellow);background:rgba(255,230,109,.08);padding:20px;min-height:125px;display:flex;align-items:center;justify-content:center;text-align:center;margin-bottom:16px}.question-text h2{font-size:clamp(1.15rem,2.6vw,1.8rem);line-height:1.4}.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}.answer-btn{border:3px solid var(--cyan);background:rgba(5,8,22,.95);color:var(--text);padding:15px;text-align:left;min-height:68px;line-height:1.4;box-shadow:4px 4px 0 rgba(255,43,214,.55);font-family:inherit;font-weight:bold;cursor:pointer;transition:.18s}.answer-btn:hover:not(:disabled){background:rgba(34,247,255,.12);transform:translate(-2px,-2px)}.answer-btn.correct{border-color:var(--green);color:var(--green);background:rgba(57,255,136,.18);box-shadow:0 0 18px rgba(57,255,136,.5)}.answer-btn.wrong{border-color:var(--red);color:var(--red);background:rgba(255,77,109,.18);box-shadow:0 0 18px rgba(255,77,109,.5)}.modal-message{border:2px dashed var(--pink);padding:12px;color:var(--muted);min-height:48px;line-height:1.5}.start-card{text-align:center}.start-card h2{color:var(--yellow);font-size:clamp(1.6rem,4vw,3rem);text-transform:uppercase;text-shadow:3px 3px 0 var(--pink);margin-bottom:14px}.start-card p{color:var(--muted);line-height:1.6;margin-bottom:18px}
+    @media(max-width:1000px){.layout{grid-template-columns:1fr}.side-panel{order:-1}}@media(max-width:720px){.topbar{flex-direction:column;align-items:stretch}.brand{text-align:left}.hud{grid-template-columns:repeat(2,1fr)}.answers{grid-template-columns:1fr}.mobile-pad{display:grid}}@media(max-height:800px){.page{padding-top:8px}header{padding:10px 16px}h1{font-size:clamp(1.8rem,3.3vw,3rem);margin-bottom:6px}.subtitle{display:none}.hud-item{padding:7px;font-size:.78rem}.canvas-wrap{padding:7px}canvas{width:min(100%,650px)}.side-panel h2{font-size:1rem}.info-box,.status-box,.legend{font-size:.78rem}.btn{padding:8px;font-size:.78rem}}
+
+    /* ===== LAPTOP SCREEN FIT UPDATE ===== */
+    html, body {
+      width: 100%;
+      min-height: 100%;
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    .page {
+      width: min(1400px, 98%);
+      height: 100vh;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      margin-bottom: 6px;
+      flex: 0 0 auto;
+    }
+
+    .back-link {
+      padding: 7px 10px;
+      font-size: 0.78rem;
+    }
+
+    .brand {
+      font-size: 0.82rem;
+    }
+
+    header {
+      padding: 9px 14px;
+      margin-bottom: 8px;
+      flex: 0 0 auto;
+    }
+
+    .badge {
+      padding: 4px 7px;
+      margin-bottom: 5px;
+      font-size: 0.68rem;
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 3vw, 2.7rem);
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 0.78rem;
+      line-height: 1.25;
+      max-width: 980px;
+    }
+
+    .layout {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 290px;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .game-panel,
+    .side-panel {
+      padding: 10px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .game-panel::before,
+    .side-panel::before {
+      height: 4px;
+      margin: -10px -10px 8px;
+    }
+
+    .game-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hud {
+      gap: 7px;
+      margin-bottom: 8px;
+      flex: 0 0 auto;
+    }
+
+    .hud-item {
+      padding: 6px;
+      font-size: 0.72rem;
+    }
+
+    .canvas-wrap {
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 6px;
+      overflow: hidden;
+    }
+
+    canvas {
+      width: auto;
+      height: min(100%, calc(100vh - 190px));
+      max-width: 100%;
+      max-height: 100%;
+      aspect-ratio: 19 / 21;
+    }
+
+    .side-panel h2 {
+      font-size: 0.95rem;
+      margin-bottom: 7px;
+    }
+
+    .info-box {
+      padding: 8px;
+      margin-bottom: 8px;
+      font-size: 0.74rem;
+      line-height: 1.35;
+    }
+
+    .control-grid {
+      gap: 7px;
+      margin-bottom: 8px;
+    }
+
+    .btn {
+      padding: 7px;
+      font-size: 0.72rem;
+    }
+
+    .status-box {
+      padding: 8px;
+      min-height: 48px;
+      font-size: 0.74rem;
+      line-height: 1.35;
+      margin-bottom: 8px;
+    }
+
+    .legend {
+      gap: 5px;
+      font-size: 0.72rem;
+      line-height: 1.25;
+    }
+
+    .question-card,
+    .start-card {
+      padding: 16px;
+    }
+
+    .question-card::before,
+    .start-card::before {
+      height: 5px;
+      margin: -16px -16px 14px;
+    }
+
+    .start-card h2 {
+      font-size: clamp(1.4rem, 3vw, 2.4rem);
+      margin-bottom: 10px;
+    }
+
+    .start-card p {
+      font-size: 0.9rem;
+      line-height: 1.45;
+      margin-bottom: 14px;
+    }
+
+    .question-text {
+      min-height: 90px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .answer-btn {
+      min-height: 54px;
+      padding: 10px;
+      font-size: 0.86rem;
+    }
+
+    .modal-message {
+      padding: 9px;
+      min-height: 38px;
+      font-size: 0.84rem;
+    }
+
+    /* Wider laptops: keep everything visible without page scrolling */
+    @media (min-width: 1001px) and (max-height: 820px) {
+      .subtitle {
+        display: none;
+      }
+
+      canvas {
+        height: min(100%, calc(100vh - 155px));
+      }
+    }
+
+    /* Very short laptop screens */
+    @media (min-width: 1001px) and (max-height: 720px) {
+      .topbar {
+        display: none;
+      }
+
+      header {
+        padding: 7px 12px;
+        margin-bottom: 6px;
+      }
+
+      .badge {
+        display: none;
+      }
+
+      h1 {
+        font-size: clamp(1.4rem, 2.6vw, 2.3rem);
+      }
+
+      canvas {
+        height: min(100%, calc(100vh - 112px));
+      }
+
+      .info-box {
+        display: none;
+      }
+    }
+
+    /* Tablets and phones can scroll normally */
+    @media (max-width: 1000px) {
+      body {
+        overflow-y: auto;
+      }
+
+      .page {
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel {
+        order: -1;
+      }
+
+      canvas {
+        width: min(100%, 680px);
+        height: auto;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a class="back-link" href="../index.html">← Back to Quiz Hub</a><div class="brand">By Mr. Gilang Yudha Tama</div></div>
+    <header><div class="badge">Cyberpunk Vocabulary Chase</div><h1>CyberPac</h1><p class="subtitle">Collect neon pellets, dodge grammar ghosts, and answer vocabulary questions to survive. Question chips test synonyms, antonyms, homonyms, and word meanings.</p></header>
+    <section class="layout">
+      <main class="game-panel"><div class="hud"><div class="hud-item">Score: <span id="scoreText">0</span></div><div class="hud-item">Lives: <span id="livesText">3</span></div><div class="hud-item">Level: <span id="levelText">1</span></div><div class="hud-item">Questions: <span id="questionsText">0</span></div></div><div class="canvas-wrap"><canvas id="gameCanvas" width="760" height="840"></canvas></div><div class="mobile-pad"><button class="pad-btn blank">.</button><button class="pad-btn" onclick="setDirection(0,-1)">▲</button><button class="pad-btn blank">.</button><button class="pad-btn" onclick="setDirection(-1,0)">◀</button><button class="pad-btn" onclick="pauseGame()">Ⅱ</button><button class="pad-btn" onclick="setDirection(1,0)">▶</button><button class="pad-btn blank">.</button><button class="pad-btn" onclick="setDirection(0,1)">▼</button><button class="pad-btn blank">.</button></div></main>
+      <aside class="side-panel"><h2>Game Control</h2><div class="info-box">Move with <strong>Arrow Keys</strong> or <strong>WASD</strong>.<br><br>Collect <strong>?</strong> chips to answer questions. Correct answers give bonus points and weaken ghosts.</div><div class="control-grid"><button class="btn secondary" onclick="startGame()">Start</button><button class="btn secondary" onclick="pauseGame()">Pause</button><button class="btn full" onclick="resetGame()">Reset Game</button></div><div id="statusBox" class="status-box">Ready. Click Start to enter the neon maze.</div><div class="legend"><div><span>Yellow circle:</span> You</div><div><span>Small dots:</span> +10 points</div><div><span>?</span> chips: vocabulary question</div><div><span>Ghosts:</span> avoid them or lose lives</div><div><span>Blue ghosts:</span> vulnerable mode</div></div></aside>
+    </section>
+  </div>
+  <div id="startModal" class="modal active"><div class="start-card"><h2>CyberPac Online</h2><p>Eat the pellets, collect question chips, and survive the ghosts. This is Pac-Man energy, but make it English class.</p><button class="btn secondary" onclick="startGame()">Start Game</button></div></div>
+  <div id="questionModal" class="modal"><div class="question-card"><div class="modal-top"><span id="questionCategory">Vocabulary</span><span>Bonus: +300</span></div><div class="question-text"><h2 id="questionText">Question appears here</h2></div><div id="answerGrid" class="answers"></div><div id="modalMessage" class="modal-message">Choose the correct answer.</div></div></div>
+  <script>
+    const SFX=(()=>{let audioCtx;function init(){const A=window.AudioContext||window.webkitAudioContext;if(!A)return;if(!audioCtx)audioCtx=new A();if(audioCtx.state==="suspended")audioCtx.resume()}function tone(freq,duration=.08,type="square",volume=.04,delay=0){init();if(!audioCtx)return;const now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=type;osc.frequency.setValueAtTime(freq,now+delay);gain.gain.setValueAtTime(.0001,now+delay);gain.gain.exponentialRampToValueAtTime(volume,now+delay+.01);gain.gain.exponentialRampToValueAtTime(.0001,now+delay+duration);osc.connect(gain);gain.connect(audioCtx.destination);osc.start(now+delay);osc.stop(now+delay+duration+.04)}function play(name){init();switch(name){case"click":tone(520,.035,"square",.025);break;case"start":tone(220,.07,"sawtooth",.04);tone(440,.07,"sawtooth",.04,.08);tone(880,.1,"sawtooth",.04,.16);break;case"eat":tone(900,.025,"square",.015);break;case"question":tone(550,.05,"triangle",.035);tone(900,.07,"triangle",.035,.05);break;case"correct":tone(523,.07,"square",.045);tone(659,.08,"square",.045,.08);tone(784,.12,"square",.045,.17);break;case"wrong":tone(220,.12,"sawtooth",.045);tone(155,.18,"sawtooth",.045,.13);break;case"power":tone(880,.06,"triangle",.04);tone(1100,.06,"triangle",.04,.07);tone(1320,.08,"triangle",.04,.14);break;case"hit":tone(180,.14,"sawtooth",.045);tone(120,.18,"sawtooth",.045,.12);break;case"win":tone(523,.08,"square",.045);tone(659,.08,"square",.045,.09);tone(784,.08,"square",.045,.18);tone(1046,.18,"square",.045,.28);break;case"gameover":tone(330,.12,"sawtooth",.04);tone(247,.14,"sawtooth",.04,.13);tone(165,.22,"sawtooth",.04,.28);break}}return{init,play}})();
+    document.addEventListener("pointerdown",()=>SFX.init(),{once:true});document.addEventListener("click",e=>{if(!(e.target instanceof Element))return;const clicked=e.target.closest("button,.back-link");if(clicked)SFX.play("click")});
+    const canvas=document.getElementById("gameCanvas"),ctx=canvas.getContext("2d"),scoreText=document.getElementById("scoreText"),livesText=document.getElementById("livesText"),levelText=document.getElementById("levelText"),questionsText=document.getElementById("questionsText"),statusBox=document.getElementById("statusBox"),startModal=document.getElementById("startModal"),questionModal=document.getElementById("questionModal"),questionCategory=document.getElementById("questionCategory"),questionText=document.getElementById("questionText"),answerGrid=document.getElementById("answerGrid"),modalMessage=document.getElementById("modalMessage");
+    const tileSize=40,rows=21,cols=19,rawMap=["###################","#Q......#......Q..#","#.###.#.#.#.###.#.#","#.....#...#.....#.#","#.###.#####.###.#.#","#.................#","###.#.###.###.#.###","#...#...#.#...#...#","#.#####.#.#.#####.#","#Q.....GPG.....Q..#","#.#####.#.#.#####.#","#...#...#.#...#...#","###.#.###.###.#.###","#.................#","#.###.#####.###.#.#","#...#...#...#...#.#","#.#.#.#.#.#.#.#.#.#","#.#...#...#...#.#.#","#.###.#.#.#.###.#.#","#..Q.....#.....Q..#","###################"];
+    const questionBank=[{category:"Synonyms",question:"Which word is closest in meaning to 'huge'?",answers:["Tiny","Large","Weak","Quiet"],correct:1},{category:"Antonyms",question:"What is the opposite of 'generous'?",answers:["Kind","Stingy","Helpful","Friendly"],correct:1},{category:"Homonyms",question:"Which word can mean a flying animal and a sports tool?",answers:["Bat","Bear","Duck","Seal"],correct:0},{category:"Synonyms",question:"Which word is closest in meaning to 'rapid'?",answers:["Fast","Late","Careful","Silent"],correct:0},{category:"Antonyms",question:"What is the opposite of 'ancient'?",answers:["Old","Modern","Historical","Broken"],correct:1},{category:"Word Meaning",question:"What does 'brave' mean?",answers:["Afraid","Courageous","Lazy","Confused"],correct:1},{category:"Homonyms",question:"Which word can mean money from a river edge and a financial institution?",answers:["Bank","Card","Cash","Stream"],correct:0},{category:"Synonyms",question:"Which word is closest in meaning to 'smart'?",answers:["Intelligent","Hungry","Noisy","Weak"],correct:0},{category:"Antonyms",question:"What is the opposite of 'increase'?",answers:["Grow","Rise","Decrease","Expand"],correct:2},{category:"Word Meaning",question:"What does 'purchase' mean?",answers:["Sell","Buy","Borrow","Lose"],correct:1},{category:"Synonyms",question:"Which word is closest in meaning to 'difficult'?",answers:["Easy","Hard","Soft","Simple"],correct:1},{category:"Antonyms",question:"What is the opposite of 'visible'?",answers:["Clear","Invisible","Bright","Open"],correct:1},{category:"Homophones",question:"Which word sounds like 'sea'?",answers:["See","Say","She","Sit"],correct:0},{category:"Word Meaning",question:"What does 'assist' mean?",answers:["Help","Attack","Hide","Ignore"],correct:0},{category:"Synonyms",question:"Which word is closest in meaning to 'calm'?",answers:["Angry","Peaceful","Loud","Rough"],correct:1},{category:"Antonyms",question:"What is the opposite of 'temporary'?",answers:["Brief","Short","Permanent","Recent"],correct:2}];
+    let map=[],score=0,lives=3,level=1,answeredQuestions=0,pelletsLeft=0,running=false,paused=true,questionActive=false,vulnerableTimer=0,mouthCounter=0,lastFrame=0,gameLoopId=null,questionIndex=0;const playerStart={x:9,y:9};let player={x:playerStart.x,y:playerStart.y,dx:0,dy:0,nextDx:0,nextDy:0};const ghostStarts=[{x:8,y:9,color:"#ff2bd6"},{x:10,y:9,color:"#39ff88"},{x:9,y:8,color:"#8f4dff"}];let ghosts=[];
+    function cloneMap(){map=rawMap.map(r=>r.split(""));pelletsLeft=0;for(let y=0;y<rows;y++)for(let x=0;x<cols;x++)if(map[y][x]===".")pelletsLeft++}function resetPositions(){player.x=playerStart.x;player.y=playerStart.y;player.dx=0;player.dy=0;player.nextDx=0;player.nextDy=0;ghosts=ghostStarts.map((g,i)=>({x:g.x,y:g.y,color:g.color,dx:i===0?-1:1,dy:0,moveCounter:0}))}function startGame(){SFX.play("start");startModal.classList.remove("active");if(!running){running=true;paused=false;statusBox.textContent="Game started. Eat pellets. Dodge ghosts. Collect ? chips.";gameLoopId=requestAnimationFrame(gameLoop)}else{paused=false;statusBox.textContent="Game resumed. Neon chase continues."}}function pauseGame(){if(!running||questionActive)return;paused=!paused;statusBox.textContent=paused?"Paused. Breathe, Sir.":"Game resumed. Back to the maze."}function resetGame(){SFX.play("start");score=0;lives=3;level=1;answeredQuestions=0;vulnerableTimer=0;running=true;paused=false;questionActive=false;questionIndex=0;cloneMap();resetPositions();updateHud();statusBox.textContent="Game reset. Fresh maze, fresh chaos.";startModal.classList.remove("active");questionModal.classList.remove("active");if(!gameLoopId)gameLoopId=requestAnimationFrame(gameLoop)}function nextLevel(){level++;vulnerableTimer=0;cloneMap();resetPositions();updateHud();statusBox.textContent=`Level ${level}. Ghosts are getting disrespectful.`;SFX.play("win")}function updateHud(){scoreText.textContent=score;livesText.textContent=lives;levelText.textContent=level;questionsText.textContent=answeredQuestions}function setDirection(dx,dy){player.nextDx=dx;player.nextDy=dy}function isWall(x,y){if(x<0||y<0||x>=cols||y>=rows)return true;return map[y][x]==="#"}function canMove(x,y,dx,dy){return!isWall(x+dx,y+dy)}
+    function movePlayer(){if(canMove(player.x,player.y,player.nextDx,player.nextDy)){player.dx=player.nextDx;player.dy=player.nextDy}if(canMove(player.x,player.y,player.dx,player.dy)){player.x+=player.dx;player.y+=player.dy}const cell=map[player.y][player.x];if(cell==="."){map[player.y][player.x]=" ";score+=10;pelletsLeft--;SFX.play("eat")}if(cell==="Q"){map[player.y][player.x]=" ";openQuestion()}if(pelletsLeft<=0)nextLevel()}function openQuestion(){questionActive=true;paused=true;SFX.play("question");const q=questionBank[questionIndex%questionBank.length];questionIndex++;questionCategory.textContent=q.category;questionText.textContent=q.question;modalMessage.textContent="Choose the correct answer.";answerGrid.innerHTML="";q.answers.forEach((answer,index)=>{const button=document.createElement("button");button.className="answer-btn";button.innerHTML=`<strong>${String.fromCharCode(65+index)}.</strong> ${answer}`;button.onclick=()=>chooseAnswer(button,index,q.correct);answerGrid.appendChild(button)});questionModal.classList.add("active")}function chooseAnswer(button,selected,correct){const buttons=document.querySelectorAll(".answer-btn");buttons.forEach(btn=>btn.disabled=true);if(selected===correct){button.classList.add("correct");score+=300;answeredQuestions++;vulnerableTimer=520;modalMessage.textContent="Correct. +300 points. Ghosts are vulnerable.";SFX.play("correct");setTimeout(closeQuestion,950)}else{button.classList.add("wrong");buttons[correct].classList.add("correct");score=Math.max(0,score-100);modalMessage.textContent="Wrong. -100 points. The ghosts took that personally.";SFX.play("wrong");setTimeout(closeQuestion,1250)}updateHud()}function closeQuestion(){questionModal.classList.remove("active");questionActive=false;paused=false}
+    function getValidDirections(e){return[{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}].filter(d=>canMove(e.x,e.y,d.dx,d.dy))}function moveGhosts(){const ghostSpeedDelay=Math.max(2,6-level);ghosts.forEach((ghost,index)=>{ghost.moveCounter++;if(ghost.moveCounter<ghostSpeedDelay)return;ghost.moveCounter=0;const valid=getValidDirections(ghost);if(valid.length===0)return;let chosen=valid[Math.floor(Math.random()*valid.length)];const shouldChase=Math.random()<(.55+level*.05);if(vulnerableTimer<=0&&shouldChase){valid.sort((a,b)=>Math.abs(ghost.x+a.dx-player.x)+Math.abs(ghost.y+a.dy-player.y)-(Math.abs(ghost.x+b.dx-player.x)+Math.abs(ghost.y+b.dy-player.y)));chosen=valid[0]}if(vulnerableTimer>0){valid.sort((a,b)=>Math.abs(ghost.x+b.dx-player.x)+Math.abs(ghost.y+b.dy-player.y)-(Math.abs(ghost.x+a.dx-player.x)+Math.abs(ghost.y+a.dy-player.y)));chosen=valid[0]}ghost.dx=chosen.dx;ghost.dy=chosen.dy;ghost.x+=ghost.dx;ghost.y+=ghost.dy})}function checkGhostCollision(){ghosts.forEach((ghost,index)=>{if(ghost.x===player.x&&ghost.y===player.y){if(vulnerableTimer>0){score+=500;SFX.play("power");ghost.x=ghostStarts[index].x;ghost.y=ghostStarts[index].y;statusBox.textContent="Ghost deleted from the matrix. +500 points."}else{lives--;SFX.play("hit");statusBox.textContent="Ghost hit. Life lost. The grammar ghost got hands.";resetPositions();if(lives<=0)gameOver()}updateHud()}})}function gameOver(){running=false;paused=true;SFX.play("gameover");statusBox.textContent=`Game over. Final score: ${score}. Reset to try again.`}
+    function drawRoundedRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();ctx.fill();ctx.stroke()}function drawMap(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#02030a";ctx.fillRect(0,0,canvas.width,canvas.height);for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const cell=map[y][x],px=x*tileSize,py=y*tileSize;if(cell==="#"){ctx.fillStyle="rgba(34,247,255,.12)";ctx.strokeStyle="#22f7ff";ctx.lineWidth=3;ctx.shadowColor="#22f7ff";ctx.shadowBlur=12;drawRoundedRect(px+4,py+4,tileSize-8,tileSize-8,8);ctx.shadowBlur=0}if(cell==="."){ctx.fillStyle="#f4f7ff";ctx.shadowColor="#f4f7ff";ctx.shadowBlur=8;ctx.beginPath();ctx.arc(px+tileSize/2,py+tileSize/2,4,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0}if(cell==="Q"){ctx.fillStyle="#ffe66d";ctx.shadowColor="#ff2bd6";ctx.shadowBlur=14;ctx.font="bold 24px Courier New";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("?",px+tileSize/2,py+tileSize/2);ctx.shadowBlur=0}}}function drawPlayer(){const px=player.x*tileSize+tileSize/2,py=player.y*tileSize+tileSize/2;mouthCounter+=.2;const mouth=Math.abs(Math.sin(mouthCounter))*.45+.12;let angle=0;if(player.dx===1)angle=0;if(player.dx===-1)angle=Math.PI;if(player.dy===-1)angle=-Math.PI/2;if(player.dy===1)angle=Math.PI/2;ctx.fillStyle="#ffe66d";ctx.shadowColor="#ffe66d";ctx.shadowBlur=18;ctx.beginPath();ctx.moveTo(px,py);ctx.arc(px,py,15,angle+mouth,angle+Math.PI*2-mouth);ctx.closePath();ctx.fill();ctx.shadowBlur=0}function drawGhost(ghost){const px=ghost.x*tileSize+tileSize/2,py=ghost.y*tileSize+tileSize/2;ctx.fillStyle=vulnerableTimer>0?"#22f7ff":ghost.color;ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=16;ctx.beginPath();ctx.arc(px,py-3,14,Math.PI,0);ctx.lineTo(px+14,py+14);ctx.lineTo(px+7,py+8);ctx.lineTo(px,py+14);ctx.lineTo(px-7,py+8);ctx.lineTo(px-14,py+14);ctx.lineTo(px-14,py-3);ctx.closePath();ctx.fill();ctx.shadowBlur=0;ctx.fillStyle="#050510";ctx.beginPath();ctx.arc(px-5,py-3,2.5,0,Math.PI*2);ctx.arc(px+5,py-3,2.5,0,Math.PI*2);ctx.fill()}function drawOverlayText(){if(!running||paused){ctx.fillStyle="rgba(0,0,0,.48)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#ffe66d";ctx.shadowColor="#ff2bd6";ctx.shadowBlur=16;ctx.font="bold 34px Courier New";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(running?"PAUSED":"READY",canvas.width/2,canvas.height/2);ctx.shadowBlur=0}if(vulnerableTimer>0&&!paused){ctx.fillStyle="#22f7ff";ctx.font="bold 20px Courier New";ctx.textAlign="center";ctx.fillText("GHOSTS VULNERABLE",canvas.width/2,26)}}function draw(){drawMap();ghosts.forEach(drawGhost);drawPlayer();drawOverlayText()}function update(){if(!running||paused||questionActive)return;if(vulnerableTimer>0)vulnerableTimer--;movePlayer();moveGhosts();checkGhostCollision();updateHud()}function gameLoop(timestamp){gameLoopId=requestAnimationFrame(gameLoop);if(timestamp-lastFrame<115){draw();return}lastFrame=timestamp;update();draw()}
+    document.addEventListener("keydown",event=>{const key=event.key.toLowerCase();if(key==="arrowup"||key==="w")setDirection(0,-1);if(key==="arrowdown"||key==="s")setDirection(0,1);if(key==="arrowleft"||key==="a")setDirection(-1,0);if(key==="arrowright"||key==="d")setDirection(1,0);if(key===" ")pauseGame()});cloneMap();resetPositions();updateHud();draw();
+  </script>
+</body>
+</html>
