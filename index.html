@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quiz World | Mr. Gilang Yudha Tama</title>
+  <title>Quiz World | Mr. Gilang Yudha Tama, S.S</title>
 
   <style>
     * {
@@ -364,7 +364,7 @@
       <p class="subtitle">
         Choose your game mode, enter the neon zone, and let the classroom chaos begin.
       </p>
-      <p class="creator">By Mr. Gilang Yudha Tama</p>
+      <p class="creator">By Mr. Gilang Yudha Tama, S.S</p>
 
       <div class="control-panel">
         <input
@@ -638,6 +638,266 @@ document.addEventListener("click", (event) => {
   }
 });
     renderQuizzes();
+    /* ===== RETRO CYBERPUNK BACKSOUND FOR MAIN HUB ===== */
+
+if (!window.CYBER_MUSIC) {
+  window.CYBER_MUSIC = (() => {
+    let audioCtx;
+    let masterGain;
+    let delayNode;
+    let feedbackGain;
+    let filterNode;
+    let isPlaying = false;
+    let timer = null;
+    let step = 0;
+    let nextNoteTime = 0;
+
+    const tempo = 112;
+    const stepTime = 60 / tempo / 4;
+
+    const bassLine = [
+      36, 36, 43, 36,
+      34, 34, 41, 34,
+      39, 39, 46, 39,
+      31, 31, 38, 31
+    ];
+
+    const arpLine = [
+      60, 67, 72, 79,
+      58, 65, 70, 77,
+      63, 70, 75, 82,
+      55, 62, 67, 74
+    ];
+
+    function midiToFreq(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+
+    function initAudio() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+      if (!AudioContextClass) return;
+
+      if (!audioCtx) {
+        audioCtx = new AudioContextClass();
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.045;
+
+        filterNode = audioCtx.createBiquadFilter();
+        filterNode.type = "lowpass";
+        filterNode.frequency.value = 1600;
+        filterNode.Q.value = 7;
+
+        delayNode = audioCtx.createDelay();
+        delayNode.delayTime.value = 0.22;
+
+        feedbackGain = audioCtx.createGain();
+        feedbackGain.gain.value = 0.28;
+
+        delayNode.connect(feedbackGain);
+        feedbackGain.connect(delayNode);
+
+        filterNode.connect(delayNode);
+        filterNode.connect(masterGain);
+        delayNode.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+      }
+
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+    }
+
+    function playTone(freq, time, duration, type, volume, destination = filterNode) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, time);
+
+      gain.gain.setValueAtTime(0.0001, time);
+      gain.gain.exponentialRampToValueAtTime(volume, time + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+      osc.connect(gain);
+      gain.connect(destination);
+
+      osc.start(time);
+      osc.stop(time + duration + 0.05);
+    }
+
+    function playNoise(time, duration, volume) {
+      const bufferSize = audioCtx.sampleRate * duration;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = audioCtx.createBufferSource();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+
+      filter.type = "highpass";
+      filter.frequency.value = 6500;
+
+      gain.gain.setValueAtTime(volume, time);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+      noise.buffer = buffer;
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+
+      noise.start(time);
+      noise.stop(time + duration);
+    }
+
+    function playKick(time) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(95, time);
+      osc.frequency.exponentialRampToValueAtTime(38, time + 0.12);
+
+      gain.gain.setValueAtTime(0.14, time);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.14);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+
+      osc.start(time);
+      osc.stop(time + 0.16);
+    }
+
+    function playSnare(time) {
+      playNoise(time, 0.08, 0.035);
+      playTone(190, time, 0.06, "triangle", 0.035, masterGain);
+    }
+
+    function scheduleStep(time) {
+      const bassNote = bassLine[step % bassLine.length];
+      const arpNote = arpLine[step % arpLine.length];
+
+      if (step % 4 === 0) {
+        playKick(time);
+      }
+
+      if (step % 8 === 4) {
+        playSnare(time);
+      }
+
+      if (step % 2 === 0) {
+        playTone(midiToFreq(bassNote), time, stepTime * 1.8, "sawtooth", 0.055);
+      }
+
+      playTone(midiToFreq(arpNote), time, stepTime * 0.75, "square", 0.025);
+
+      if (step % 2 === 1) {
+        playNoise(time, 0.025, 0.018);
+      }
+
+      step++;
+    }
+
+    function scheduler() {
+      while (nextNoteTime < audioCtx.currentTime + 0.25) {
+        scheduleStep(nextNoteTime);
+        nextNoteTime += stepTime;
+      }
+    }
+
+    function start() {
+      initAudio();
+
+      if (!audioCtx || isPlaying) return;
+
+      isPlaying = true;
+      step = 0;
+      nextNoteTime = audioCtx.currentTime + 0.05;
+
+      timer = setInterval(scheduler, 60);
+    }
+
+    function stop() {
+      if (!isPlaying) return;
+
+      isPlaying = false;
+      clearInterval(timer);
+      timer = null;
+    }
+
+    function toggle() {
+      if (isPlaying) {
+        stop();
+      } else {
+        start();
+      }
+
+      updateButton();
+    }
+
+    function updateButton() {
+      const button = document.getElementById("musicToggleBtn");
+
+      if (!button) return;
+
+      button.textContent = isPlaying ? "Music: ON" : "Music: OFF";
+      button.classList.toggle("music-on", isPlaying);
+    }
+
+    function createButton() {
+      if (document.getElementById("musicToggleBtn")) return;
+
+      const style = document.createElement("style");
+      style.textContent = `
+        #musicToggleBtn {
+          position: fixed;
+          right: 18px;
+          bottom: 18px;
+          z-index: 9999;
+          border: 2px solid #22f7ff;
+          background: #080812;
+          color: #22f7ff;
+          padding: 11px 14px;
+          font-family: "Courier New", monospace;
+          font-weight: bold;
+          text-transform: uppercase;
+          cursor: pointer;
+          box-shadow: 4px 4px 0 #ff2bd6, 0 0 16px rgba(34, 247, 255, 0.45);
+        }
+
+        #musicToggleBtn.music-on {
+          background: #ffe66d;
+          color: #050510;
+          border-color: #ff2bd6;
+          box-shadow: 4px 4px 0 #22f7ff, 0 0 18px rgba(255, 230, 109, 0.65);
+        }
+
+        #musicToggleBtn:hover {
+          transform: translate(-2px, -2px);
+        }
+      `;
+
+      document.head.appendChild(style);
+
+      const button = document.createElement("button");
+      button.id = "musicToggleBtn";
+      button.textContent = "Music: OFF";
+      button.addEventListener("click", toggle);
+
+      document.body.appendChild(button);
+    }
+
+    document.addEventListener("DOMContentLoaded", createButton);
+    createButton();
+
+    return { start, stop, toggle };
+  })();
+}
   </script>
 </body>
 </html>
