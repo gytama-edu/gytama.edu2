@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>This or That | Cyberpunk Quiz</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #050510;
+      --panel: rgba(13, 16, 35, 0.94);
+      --cyan: #22f7ff;
+      --pink: #ff2bd6;
+      --yellow: #ffe66d;
+      --green: #39ff88;
+      --red: #ff4d6d;
+      --purple: #8f4dff;
+      --text: #f4f7ff;
+      --muted: #aab2dd;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Courier New", monospace;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 43, 214, 0.24), transparent 34%),
+        radial-gradient(circle at top right, rgba(34, 247, 255, 0.22), transparent 34%),
+        linear-gradient(180deg, #050510, #11142b 55%, #04040a);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(34, 247, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 43, 214, 0.05) 1px, transparent 1px);
+      background-size: 34px 34px;
+      pointer-events: none;
+      z-index: -2;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.035) 0px,
+        rgba(255, 255, 255, 0.035) 1px,
+        transparent 2px,
+        transparent 6px
+      );
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .page {
+      width: min(1380px, 97%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 10px 0 22px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .back-link {
+      color: #050510;
+      background: var(--yellow);
+      border: 2px solid var(--cyan);
+      text-decoration: none;
+      padding: 8px 12px;
+      font-weight: bold;
+      box-shadow: 4px 4px 0 var(--pink);
+      text-transform: uppercase;
+      font-size: 0.8rem;
+    }
+
+    .brand {
+      color: var(--green);
+      font-weight: bold;
+      text-shadow: 0 0 12px var(--green);
+      text-align: right;
+      font-size: 0.85rem;
+    }
+
+    header {
+      border: 3px solid var(--cyan);
+      background: rgba(5, 7, 18, 0.82);
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      box-shadow:
+        0 0 18px rgba(34, 247, 255, 0.5),
+        inset 0 0 24px rgba(255, 43, 214, 0.16);
+    }
+
+    .badge {
+      display: inline-block;
+      color: #050510;
+      background: var(--green);
+      padding: 5px 8px;
+      font-weight: bold;
+      margin-bottom: 7px;
+      box-shadow: 4px 4px 0 var(--pink);
+      text-transform: uppercase;
+      font-size: 0.7rem;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 3.5vw, 3.4rem);
+      text-transform: uppercase;
+      line-height: 0.92;
+      text-shadow:
+        3px 3px 0 var(--pink),
+        -3px -3px 0 var(--cyan),
+        0 0 25px rgba(255, 43, 214, 0.75);
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 1000px;
+      line-height: 1.35;
+      font-size: 0.85rem;
+    }
+
+    .layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr) 290px;
+      gap: 12px;
+      align-items: stretch;
+      min-height: 0;
+    }
+
+    .panel {
+      border: 3px solid rgba(34, 247, 255, 0.78);
+      background: var(--panel);
+      box-shadow:
+        0 0 18px rgba(34, 247, 255, 0.25),
+        7px 7px 0 rgba(255, 43, 214, 0.5);
+      padding: 12px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      display: block;
+      height: 5px;
+      background: linear-gradient(90deg, var(--pink), var(--cyan), var(--yellow), var(--green));
+      margin: -12px -12px 10px;
+    }
+
+    .panel h2 {
+      color: var(--yellow);
+      text-transform: uppercase;
+      text-shadow: 2px 2px 0 var(--pink);
+      margin-bottom: 9px;
+      font-size: 1.05rem;
+    }
+
+    label {
+      color: var(--cyan);
+      font-weight: bold;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    select {
+      width: 100%;
+      background: #070815;
+      color: var(--text);
+      border: 2px solid var(--purple);
+      padding: 9px;
+      font-family: inherit;
+      font-weight: bold;
+      outline: none;
+      box-shadow: 0 0 12px rgba(143, 77, 255, 0.35);
+      font-size: 0.82rem;
+      margin: 7px 0 10px;
+    }
+
+    .btn {
+      border: 2px solid var(--yellow);
+      background: var(--pink);
+      color: #050510;
+      padding: 9px;
+      font-family: inherit;
+      font-weight: bold;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 var(--cyan);
+      transition: 0.18s;
+      font-size: 0.78rem;
+    }
+
+    .btn:hover {
+      background: var(--yellow);
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--pink);
+    }
+
+    .btn.secondary {
+      background: var(--cyan);
+      box-shadow: 4px 4px 0 var(--pink);
+    }
+
+    .btn.green {
+      background: var(--green);
+      box-shadow: 4px 4px 0 var(--pink);
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .btn.full {
+      grid-column: 1 / -1;
+    }
+
+    .info-box,
+    .status-box {
+      border: 2px dashed var(--purple);
+      padding: 9px;
+      color: var(--muted);
+      line-height: 1.4;
+      margin-bottom: 10px;
+      background: rgba(143, 77, 255, 0.08);
+      font-size: 0.78rem;
+    }
+
+    .status-box {
+      border-color: var(--green);
+      color: var(--green);
+      min-height: 56px;
+      font-weight: bold;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .stat-card {
+      border: 2px solid var(--purple);
+      background: rgba(143, 77, 255, 0.12);
+      padding: 9px;
+      text-align: center;
+      font-weight: bold;
+      color: var(--yellow);
+      font-size: 0.78rem;
+    }
+
+    .stat-card span {
+      display: block;
+      color: var(--green);
+      font-size: 1.4rem;
+      margin-top: 3px;
+      text-shadow: 0 0 10px rgba(57, 255, 136, 0.7);
+    }
+
+    .game-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .round-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      color: var(--yellow);
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+    }
+
+    .choice-area {
+      flex: 1;
+      min-height: 360px;
+      display: grid;
+      grid-template-columns: 1fr 90px 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .choice-card {
+      min-height: 340px;
+      border: 4px solid var(--cyan);
+      background:
+        linear-gradient(135deg, rgba(34, 247, 255, 0.12), rgba(255, 43, 214, 0.08)),
+        #080a18;
+      color: var(--text);
+      padding: 22px;
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 8px 8px 0 rgba(255, 43, 214, 0.55);
+      transition: 0.18s;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .choice-card:hover {
+      transform: translate(-4px, -4px);
+      box-shadow: 12px 12px 0 rgba(255, 43, 214, 0.8);
+      border-color: var(--yellow);
+    }
+
+    .choice-card.left {
+      border-color: var(--cyan);
+    }
+
+    .choice-card.right {
+      border-color: var(--pink);
+      box-shadow: 8px 8px 0 rgba(34, 247, 255, 0.55);
+    }
+
+    .choice-card.right:hover {
+      box-shadow: 12px 12px 0 rgba(34, 247, 255, 0.8);
+    }
+
+    .choice-label {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      color: #050510;
+      background: var(--yellow);
+      padding: 6px 9px;
+      text-transform: uppercase;
+      box-shadow: 3px 3px 0 var(--pink);
+      font-size: 0.75rem;
+    }
+
+    .choice-card h3 {
+      font-size: clamp(2rem, 4vw, 4.5rem);
+      line-height: 1.05;
+      text-transform: uppercase;
+      text-shadow:
+        3px 3px 0 var(--pink),
+        0 0 20px rgba(34, 247, 255, 0.5);
+    }
+
+    .choice-card.right h3 {
+      text-shadow:
+        3px 3px 0 var(--cyan),
+        0 0 20px rgba(255, 43, 214, 0.5);
+    }
+
+    .vote-count {
+      margin-top: 20px;
+      color: var(--green);
+      font-size: 1.2rem;
+      text-shadow: 0 0 12px rgba(57, 255, 136, 0.8);
+    }
+
+    .vs {
+      color: var(--yellow);
+      font-size: clamp(2rem, 4vw, 4rem);
+      font-weight: bold;
+      text-align: center;
+      text-shadow:
+        3px 3px 0 var(--pink),
+        -3px -3px 0 var(--cyan),
+        0 0 18px rgba(255, 230, 109, 0.8);
+    }
+
+    .prompt-box {
+      border: 3px solid var(--yellow);
+      background: rgba(255, 230, 109, 0.08);
+      color: var(--muted);
+      padding: 12px;
+      line-height: 1.4;
+      font-size: 0.88rem;
+      text-align: center;
+    }
+
+    .prompt-box strong {
+      color: var(--yellow);
+    }
+
+    .pair-list {
+      display: grid;
+      gap: 7px;
+      max-height: calc(100vh - 280px);
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .pair-item {
+      border: 2px solid rgba(34, 247, 255, 0.45);
+      background: rgba(34, 247, 255, 0.07);
+      color: var(--muted);
+      padding: 8px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      cursor: pointer;
+      line-height: 1.25;
+    }
+
+    .pair-item.active {
+      border-color: var(--yellow);
+      color: var(--yellow);
+      background: rgba(255, 230, 109, 0.1);
+      box-shadow: 0 0 12px rgba(255, 230, 109, 0.35);
+    }
+
+    #musicToggleBtn {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 9999;
+      border: 2px solid var(--cyan);
+      background: #080812;
+      color: var(--cyan);
+      padding: 9px 12px;
+      font-family: "Courier New", monospace;
+      font-weight: bold;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 var(--pink), 0 0 16px rgba(34, 247, 255, 0.45);
+      font-size: 0.75rem;
+    }
+
+    #musicToggleBtn.music-on {
+      background: var(--yellow);
+      color: #050510;
+      border-color: var(--pink);
+      box-shadow: 4px 4px 0 var(--cyan), 0 0 18px rgba(255, 230, 109, 0.65);
+    }
+
+    @media (max-width: 1050px) {
+      .page {
+        height: auto;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .choice-area {
+        grid-template-columns: 1fr;
+      }
+
+      .vs {
+        font-size: 2.5rem;
+      }
+
+      .choice-card {
+        min-height: 190px;
+      }
+
+      .pair-list {
+        max-height: 240px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .brand {
+        text-align: left;
+      }
+
+      .choice-card h3 {
+        font-size: 2.1rem;
+      }
+    }
+
+    @media (min-width: 1051px) and (max-height: 760px) {
+      .topbar {
+        display: none;
+      }
+
+      .badge,
+      .subtitle {
+        display: none;
+      }
+
+      header {
+        padding: 8px 12px;
+        margin-bottom: 7px;
+      }
+
+      h1 {
+        font-size: clamp(1.5rem, 2.8vw, 2.5rem);
+      }
+
+      .choice-card {
+        min-height: 265px;
+      }
+
+      .choice-area {
+        min-height: 290px;
+      }
+
+      .choice-card h3 {
+        font-size: clamp(1.8rem, 3.3vw, 3.6rem);
+      }
+
+      .info-box {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a class="back-link" href="../index.html">← Back to Quiz Hub</a>
+      <div class="brand">By Mr. Gilang Yudha Tama</div>
+    </div>
+
+    <header>
+      <div class="badge">Cyberpunk Speaking Battle</div>
+      <h1>This or That</h1>
+      <p class="subtitle">
+        Choose a category, vote for your side, and explain your answer. Perfect for warm-ups, speaking practice, debates, and classroom chaos.
+      </p>
+    </header>
+
+    <section class="layout">
+      <aside class="panel">
+        <h2>Control</h2>
+
+        <label for="categorySelect">Category</label>
+        <select id="categorySelect" onchange="changeCategory()"></select>
+
+        <div class="btn-grid">
+          <button class="btn secondary" onclick="previousPair()">Previous</button>
+          <button class="btn secondary" onclick="nextPair()">Next</button>
+          <button class="btn" onclick="randomPair()">Random</button>
+          <button class="btn" onclick="resetCurrentVotes()">Reset Vote</button>
+          <button class="btn green full" onclick="resetCategoryVotes()">Reset Category</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">Left Votes<span id="leftVotesText">0</span></div>
+          <div class="stat-card">Right Votes<span id="rightVotesText">0</span></div>
+          <div class="stat-card">Round<span id="roundText">1</span></div>
+          <div class="stat-card">Total<span id="totalText">10</span></div>
+        </div>
+
+        <div id="statusBox" class="status-box">
+          Choose a side. Defend your answer with one reason.
+        </div>
+
+        <div class="info-box">
+          Keyboard shortcuts:
+          <br>
+          <strong>A / Left Arrow</strong> = vote left
+          <br>
+          <strong>D / Right Arrow</strong> = vote right
+          <br>
+          <strong>Space</strong> = next pair
+        </div>
+      </aside>
+
+      <main class="panel game-panel">
+        <div class="round-line">
+          <span id="categoryText">General</span>
+          <span id="progressText">1 / 10</span>
+        </div>
+
+        <div class="choice-area">
+          <button class="choice-card left" onclick="vote('left')">
+            <span class="choice-label">Choice A</span>
+            <h3 id="leftChoice">Cats</h3>
+            <div class="vote-count"><span id="leftCardVotes">0</span> votes</div>
+          </button>
+
+          <div class="vs">VS</div>
+
+          <button class="choice-card right" onclick="vote('right')">
+            <span class="choice-label">Choice B</span>
+            <h3 id="rightChoice">Dogs</h3>
+            <div class="vote-count"><span id="rightCardVotes">0</span> votes</div>
+          </button>
+        </div>
+
+        <div class="prompt-box">
+          <strong>Speaking Mission:</strong>
+          Choose one and explain why. Use: “I prefer ___ because ___.”
+        </div>
+      </main>
+
+      <aside class="panel">
+        <h2>Pairs</h2>
+        <div id="pairList" class="pair-list"></div>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    const SFX = (() => {
+      let audioCtx;
+
+      function init() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        if (!audioCtx) {
+          audioCtx = new AudioContextClass();
+        }
+
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+      }
+
+      function tone(freq, duration = 0.08, type = "square", volume = 0.04, delay = 0) {
+        init();
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now + delay);
+
+        gain.gain.setValueAtTime(0.0001, now + delay);
+        gain.gain.exponentialRampToValueAtTime(volume, now + delay + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now + delay);
+        osc.stop(now + delay + duration + 0.04);
+      }
+
+      function play(name) {
+        init();
+
+        switch (name) {
+          case "click":
+            tone(520, 0.035, "square", 0.025);
+            break;
+
+          case "voteLeft":
+            tone(520, 0.05, "square", 0.04);
+            tone(720, 0.06, "square", 0.04, 0.06);
+            break;
+
+          case "voteRight":
+            tone(620, 0.05, "square", 0.04);
+            tone(920, 0.06, "square", 0.04, 0.06);
+            break;
+
+          case "next":
+            tone(360, 0.04, "triangle", 0.035);
+            tone(600, 0.06, "triangle", 0.035, 0.05);
+            break;
+
+          case "reset":
+            tone(280, 0.06, "sawtooth", 0.035);
+            tone(220, 0.08, "sawtooth", 0.035, 0.07);
+            break;
+        }
+      }
+
+      return { init, play };
+    })();
+
+    const CYBER_MUSIC = (() => {
+      let audioCtx;
+      let masterGain;
+      let delayNode;
+      let feedbackGain;
+      let filterNode;
+      let timer = null;
+      let isPlaying = false;
+      let step = 0;
+      let nextNoteTime = 0;
+
+      const tempo = 112;
+      const stepTime = 60 / tempo / 4;
+      const bassLine = [36, 36, 43, 36, 34, 34, 41, 34, 39, 39, 46, 39, 31, 31, 38, 31];
+      const arpLine = [60, 67, 72, 79, 58, 65, 70, 77, 63, 70, 75, 82, 55, 62, 67, 74];
+
+      function midiToFreq(midi) {
+        return 440 * Math.pow(2, (midi - 69) / 12);
+      }
+
+      function init() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        if (!audioCtx) {
+          audioCtx = new AudioContextClass();
+
+          masterGain = audioCtx.createGain();
+          masterGain.gain.value = 0.14;
+
+          filterNode = audioCtx.createBiquadFilter();
+          filterNode.type = "lowpass";
+          filterNode.frequency.value = 1700;
+          filterNode.Q.value = 6;
+
+          delayNode = audioCtx.createDelay();
+          delayNode.delayTime.value = 0.24;
+
+          feedbackGain = audioCtx.createGain();
+          feedbackGain.gain.value = 0.24;
+
+          delayNode.connect(feedbackGain);
+          feedbackGain.connect(delayNode);
+
+          filterNode.connect(delayNode);
+          filterNode.connect(masterGain);
+          delayNode.connect(masterGain);
+          masterGain.connect(audioCtx.destination);
+        }
+
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+      }
+
+      function playTone(freq, time, duration, type, volume, destination = filterNode) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, time);
+
+        gain.gain.setValueAtTime(0.0001, time);
+        gain.gain.exponentialRampToValueAtTime(volume, time + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+        osc.connect(gain);
+        gain.connect(destination);
+
+        osc.start(time);
+        osc.stop(time + duration + 0.05);
+      }
+
+      function playNoise(time, duration, volume) {
+        const bufferSize = audioCtx.sampleRate * duration;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        const noise = audioCtx.createBufferSource();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+
+        filter.type = "highpass";
+        filter.frequency.value = 6500;
+
+        gain.gain.setValueAtTime(volume, time);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+        noise.buffer = buffer;
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(masterGain);
+
+        noise.start(time);
+        noise.stop(time + duration);
+      }
+
+      function playKick(time) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(95, time);
+        osc.frequency.exponentialRampToValueAtTime(38, time + 0.12);
+
+        gain.gain.setValueAtTime(0.12, time);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.14);
+
+        osc.connect(gain);
+        gain.connect(masterGain);
+
+        osc.start(time);
+        osc.stop(time + 0.16);
+      }
+
+      function playSnare(time) {
+        playNoise(time, 0.08, 0.032);
+        playTone(190, time, 0.06, "triangle", 0.032, masterGain);
+      }
+
+      function scheduleStep(time) {
+        const bassNote = bassLine[step % bassLine.length];
+        const arpNote = arpLine[step % arpLine.length];
+
+        if (step % 4 === 0) playKick(time);
+        if (step % 8 === 4) playSnare(time);
+        if (step % 2 === 0) playTone(midiToFreq(bassNote), time, stepTime * 1.8, "sawtooth", 0.05);
+
+        playTone(midiToFreq(arpNote), time, stepTime * 0.75, "square", 0.022);
+
+        if (step % 2 === 1) playNoise(time, 0.025, 0.016);
+
+        step++;
+      }
+
+      function scheduler() {
+        while (nextNoteTime < audioCtx.currentTime + 0.25) {
+          scheduleStep(nextNoteTime);
+          nextNoteTime += stepTime;
+        }
+      }
+
+      function start() {
+        init();
+        if (!audioCtx || isPlaying) return;
+
+        isPlaying = true;
+        step = 0;
+        nextNoteTime = audioCtx.currentTime + 0.05;
+        timer = setInterval(scheduler, 60);
+        updateButton();
+      }
+
+      function stop() {
+        if (!isPlaying) return;
+
+        isPlaying = false;
+        clearInterval(timer);
+        timer = null;
+        updateButton();
+      }
+
+      function toggle() {
+        if (isPlaying) stop();
+        else start();
+      }
+
+      function updateButton() {
+        const btn = document.getElementById("musicToggleBtn");
+        if (!btn) return;
+
+        btn.textContent = isPlaying ? "Music: ON" : "Music: OFF";
+        btn.classList.toggle("music-on", isPlaying);
+      }
+
+      return { init, start, stop, toggle };
+    })();
+
+    const categories = {
+      "General": [
+        ["Cats", "Dogs"],
+        ["Summer", "Winter"],
+        ["Morning", "Night"],
+        ["Chocolate", "Vanilla"],
+        ["Beach", "Mountains"],
+        ["City", "Countryside"],
+        ["Rich", "Famous"],
+        ["Travel to the Past", "Travel to the Future"],
+        ["Super Speed", "Invisibility"],
+        ["Coffee", "Tea"]
+      ],
+
+      "Food & Drink": [
+        ["Pizza", "Burger"],
+        ["Rice", "Noodles"],
+        ["Ice Cream", "Cake"],
+        ["Sweet", "Spicy"],
+        ["Coke", "Pepsi"],
+        ["Fried Chicken", "Fried Fish"],
+        ["Breakfast", "Dinner"],
+        ["Home Cooking", "Restaurant Food"],
+        ["Chocolate Milk", "Strawberry Milk"],
+        ["Donuts", "Cookies"]
+      ],
+
+      "Technology": [
+        ["Android", "iPhone"],
+        ["Laptop", "Tablet"],
+        ["YouTube", "TikTok"],
+        ["Online Shopping", "In-Store Shopping"],
+        ["Video Calls", "Text Messages"],
+        ["PlayStation", "Xbox"],
+        ["Google", "ChatGPT"],
+        ["E-books", "Printed Books"],
+        ["Smartwatch", "Traditional Watch"],
+        ["Keyboard", "Touchscreen"]
+      ],
+
+      "Entertainment": [
+        ["Books", "Movies"],
+        ["Action", "Comedy"],
+        ["Horror", "Romance"],
+        ["Netflix", "Disney+"],
+        ["Anime", "Cartoons"],
+        ["Movies at Home", "Movies in a Theater"],
+        ["Singing", "Dancing"],
+        ["Marvel", "DC"],
+        ["Watching Sports", "Playing Sports"],
+        ["Board Games", "Video Games"]
+      ],
+
+      "Travel & Lifestyle": [
+        ["Plane", "Train"],
+        ["Hotel", "Airbnb"],
+        ["Travel Alone", "With Friends"],
+        ["Backpacking", "Luxury Travel"],
+        ["Mountains", "Forests"],
+        ["Camping", "Staying in a Hotel"],
+        ["Live in Japan", "Live in Korea"],
+        ["Live Near the Beach", "Near the Mountains"],
+        ["Small House", "Big Apartment"],
+        ["Own a Car", "Use Public Transportation"]
+      ],
+
+      "School & Work": [
+        ["Math", "English"],
+        ["Online Classes", "Face-to-Face Classes"],
+        ["Homework", "Exams"],
+        ["Group Work", "Individual Work"],
+        ["Teacher", "Student"],
+        ["Reading", "Writing"],
+        ["Science", "History"],
+        ["Early Class", "Late Class"],
+        ["Study in Your Country", "Study Abroad"],
+        ["Work from Home", "Work in an Office"]
+      ],
+
+      "Sports": [
+        ["Soccer", "Basketball"],
+        ["Running", "Swimming"],
+        ["Gym", "Outdoor Exercise"],
+        ["Team Sports", "Individual Sports"],
+        ["Watching Sports", "Playing Sports"],
+        ["UFC", "Boxing"],
+        ["Morning Workout", "Evening Workout"],
+        ["Tennis", "Badminton"],
+        ["Cycling", "Walking"],
+        ["Strength Training", "Cardio"]
+      ],
+
+      "Famous Celebrities": [
+        ["Taylor Swift", "Beyoncé"],
+        ["Cristiano Ronaldo", "Lionel Messi"],
+        ["Dwayne Johnson", "John Cena"],
+        ["Michael Jackson", "Elvis Presley"],
+        ["Tom Cruise", "Keanu Reeves"],
+        ["LeBron James", "Stephen Curry"],
+        ["Drake", "Kendrick Lamar"],
+        ["MrBeast", "PewDiePie"],
+        ["Zendaya", "Jenna Ortega"],
+        ["Ryan Reynolds", "Hugh Jackman"]
+      ]
+    };
+
+    const categorySelect = document.getElementById("categorySelect");
+    const categoryText = document.getElementById("categoryText");
+    const progressText = document.getElementById("progressText");
+    const leftChoice = document.getElementById("leftChoice");
+    const rightChoice = document.getElementById("rightChoice");
+    const leftVotesText = document.getElementById("leftVotesText");
+    const rightVotesText = document.getElementById("rightVotesText");
+    const leftCardVotes = document.getElementById("leftCardVotes");
+    const rightCardVotes = document.getElementById("rightCardVotes");
+    const roundText = document.getElementById("roundText");
+    const totalText = document.getElementById("totalText");
+    const statusBox = document.getElementById("statusBox");
+    const pairList = document.getElementById("pairList");
+
+    let currentCategory = "General";
+    let currentIndex = 0;
+    let votes = {};
+
+    function voteKey() {
+      return `${currentCategory}-${currentIndex}`;
+    }
+
+    function getCurrentVotes() {
+      const key = voteKey();
+
+      if (!votes[key]) {
+        votes[key] = { left: 0, right: 0 };
+      }
+
+      return votes[key];
+    }
+
+    function loadCategories() {
+      Object.keys(categories).forEach((category) => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        categorySelect.appendChild(option);
+      });
+
+      categorySelect.value = currentCategory;
+    }
+
+    function changeCategory() {
+      currentCategory = categorySelect.value;
+      currentIndex = 0;
+      SFX.play("next");
+      renderPair();
+    }
+
+    function renderPair() {
+      const pairs = categories[currentCategory];
+      const pair = pairs[currentIndex];
+      const currentVotes = getCurrentVotes();
+
+      categoryText.textContent = currentCategory;
+      progressText.textContent = `${currentIndex + 1} / ${pairs.length}`;
+      leftChoice.textContent = pair[0];
+      rightChoice.textContent = pair[1];
+
+      leftVotesText.textContent = currentVotes.left;
+      rightVotesText.textContent = currentVotes.right;
+      leftCardVotes.textContent = currentVotes.left;
+      rightCardVotes.textContent = currentVotes.right;
+
+      roundText.textContent = currentIndex + 1;
+      totalText.textContent = pairs.length;
+
+      statusBox.textContent = `Current battle: ${pair[0]} or ${pair[1]}? Choose your side and explain why.`;
+
+      renderPairList();
+    }
+
+    function renderPairList() {
+      pairList.innerHTML = "";
+
+      categories[currentCategory].forEach((pair, index) => {
+        const item = document.createElement("div");
+        item.className = index === currentIndex ? "pair-item active" : "pair-item";
+        item.textContent = `${index + 1}. ${pair[0]} or ${pair[1]}?`;
+
+        item.onclick = () => {
+          currentIndex = index;
+          SFX.play("next");
+          renderPair();
+        };
+
+        pairList.appendChild(item);
+      });
+    }
+
+    function vote(side) {
+      const currentVotes = getCurrentVotes();
+
+      if (side === "left") {
+        currentVotes.left++;
+        SFX.play("voteLeft");
+        statusBox.textContent = `Vote added for ${leftChoice.textContent}. Now explain your answer.`;
+      } else {
+        currentVotes.right++;
+        SFX.play("voteRight");
+        statusBox.textContent = `Vote added for ${rightChoice.textContent}. Now explain your answer.`;
+      }
+
+      renderPair();
+    }
+
+    function nextPair() {
+      const pairs = categories[currentCategory];
+      currentIndex = (currentIndex + 1) % pairs.length;
+      SFX.play("next");
+      renderPair();
+    }
+
+    function previousPair() {
+      const pairs = categories[currentCategory];
+      currentIndex = (currentIndex - 1 + pairs.length) % pairs.length;
+      SFX.play("next");
+      renderPair();
+    }
+
+    function randomPair() {
+      const pairs = categories[currentCategory];
+      currentIndex = Math.floor(Math.random() * pairs.length);
+      SFX.play("next");
+      renderPair();
+    }
+
+    function resetCurrentVotes() {
+      votes[voteKey()] = { left: 0, right: 0 };
+      SFX.play("reset");
+      renderPair();
+      statusBox.textContent = "Current vote reset.";
+    }
+
+    function resetCategoryVotes() {
+      categories[currentCategory].forEach((pair, index) => {
+        votes[`${currentCategory}-${index}`] = { left: 0, right: 0 };
+      });
+
+      SFX.play("reset");
+      renderPair();
+      statusBox.textContent = "All votes in this category reset.";
+    }
+
+    document.addEventListener("pointerdown", () => {
+      SFX.init();
+      CYBER_MUSIC.init();
+    }, { once: true });
+
+    document.addEventListener("click", (event) => {
+      if (!(event.target instanceof Element)) return;
+
+      const clicked = event.target.closest("button, .back-link, .pair-item");
+
+      if (clicked) {
+        SFX.play("click");
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      const key = event.key.toLowerCase();
+
+      if (key === "a" || key === "arrowleft") {
+        vote("left");
+      }
+
+      if (key === "d" || key === "arrowright") {
+        vote("right");
+      }
+
+      if (key === " ") {
+        event.preventDefault();
+        nextPair();
+      }
+    });
+
+    const musicButton = document.createElement("button");
+    musicButton.id = "musicToggleBtn";
+    musicButton.textContent = "Music: OFF";
+    musicButton.onclick = () => CYBER_MUSIC.toggle();
+    document.body.appendChild(musicButton);
+
+    loadCategories();
+    renderPair();
+  </script>
+</body>
+</html>
