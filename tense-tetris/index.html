@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070612">
+  <title>Neon Tense Tetris</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #05040d; --panel: rgba(10, 10, 27, .95); --ink: #f6f7ff; --muted: #9ba5ce;
+      --cyan: #27f6ff; --pink: #ff36c8; --purple: #9a65ff; --yellow: #ffe568;
+      --green: #75ff91; --red: #ff4f70; --blue: #4b8cff;
+    }
+    html { color-scheme: dark; }
+    body {
+      min-height: 100vh; color: var(--ink); font-family: "Courier New", Consolas, monospace;
+      background:
+        radial-gradient(circle at 8% 10%, rgba(255,54,200,.2), transparent 28%),
+        radial-gradient(circle at 92% 8%, rgba(39,246,255,.17), transparent 30%),
+        linear-gradient(150deg, #05040d, #0e0b22 54%, #030309);
+      overflow-x: hidden;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+      background-image: linear-gradient(rgba(39,246,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,54,200,.05) 1px, transparent 1px);
+      background-size: 34px 34px; transform: perspective(540px) rotateX(4deg) scale(1.05);
+    }
+    body::after {
+      content: ""; position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: .42;
+      background: repeating-linear-gradient(to bottom, transparent 0, transparent 3px, rgba(255,255,255,.035) 4px, rgba(255,255,255,.035) 5px);
+      mix-blend-mode: screen;
+    }
+    button, select { font: inherit; }
+    button { touch-action: manipulation; }
+    .app { width: min(1580px, 98vw); min-height: 100vh; margin: auto; padding: 8px 0 14px; }
+
+    .topbar {
+      min-height: 74px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 14px;
+      border: 2px solid var(--cyan); background: rgba(5,6,18,.9); padding: 9px 12px; margin-bottom: 8px;
+      box-shadow: 0 0 22px rgba(39,246,255,.25), inset 0 -4px 0 rgba(255,54,200,.18); position: relative; overflow: hidden;
+    }
+    .topbar::after { content: "VERB MATRIX // SENTENCE ORDER PROTOCOL"; position: absolute; right: 12px; bottom: 3px; color: rgba(117,255,145,.38); font-size: .55rem; letter-spacing: .12em; }
+    .back-btn, .utility-btn {
+      border: 2px solid var(--purple); background: #0a091a; color: var(--ink); text-decoration: none; text-transform: uppercase;
+      padding: 8px 10px; font-weight: 900; font-size: .66rem; cursor: pointer; box-shadow: 3px 3px 0 rgba(255,54,200,.5);
+    }
+    .back-btn:hover, .utility-btn:hover, .back-btn:focus-visible, .utility-btn:focus-visible { outline: none; color: var(--cyan); border-color: var(--cyan); transform: translate(-1px,-1px); }
+    .utility-btn.active { color: var(--bg); background: var(--yellow); border-color: var(--pink); }
+    .brand { min-width: 0; }
+    .kicker { display: inline-block; color: var(--bg); background: var(--green); padding: 3px 7px; box-shadow: 4px 4px 0 var(--pink); text-transform: uppercase; font-size: .58rem; font-weight: 900; letter-spacing: .09em; margin-bottom: 4px; }
+    h1 { color: var(--yellow); text-transform: uppercase; font-size: clamp(1.45rem,3.3vw,3.15rem); line-height: .9; letter-spacing: -.07em; text-shadow: 3px 3px 0 var(--pink), -2px -2px 0 var(--cyan), 0 0 20px rgba(255,229,104,.38); white-space: nowrap; }
+    h1 span { color: var(--cyan); }
+    .utility { display: flex; gap: 7px; padding-bottom: 9px; }
+
+    .layout { display: grid; grid-template-columns: 272px minmax(0,1fr) 272px; gap: 9px; align-items: start; }
+    .panel { border: 2px solid rgba(39,246,255,.72); background: var(--panel); box-shadow: 6px 6px 0 rgba(255,54,200,.28), 0 0 20px rgba(39,246,255,.1); overflow: hidden; }
+    .panel::before { content: ""; display: block; height: 4px; background: linear-gradient(90deg,var(--pink),var(--cyan),var(--yellow),var(--green)); }
+    .panel-in { padding: 10px; }
+    .panel-title { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--yellow); text-transform: uppercase; font-weight: 900; font-size: .76rem; letter-spacing: .08em; margin-bottom: 8px; text-shadow: 1px 1px 0 var(--pink); }
+    .panel-title small { color: var(--muted); font-size: .52rem; text-shadow: none; }
+    .section-label { color: var(--cyan); text-transform: uppercase; letter-spacing: .1em; font-size: .59rem; font-weight: 900; margin: 9px 0 5px; }
+
+    .choice-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .choice-btn {
+      min-height: 42px; border: 1px solid rgba(154,101,255,.72); background: rgba(154,101,255,.08); color: var(--ink);
+      cursor: pointer; padding: 6px; text-align: left; font-weight: 900; font-size: .63rem; text-transform: uppercase;
+    }
+    .choice-btn span { display: block; color: var(--muted); font-weight: 400; font-size: .51rem; text-transform: none; margin-top: 2px; }
+    .choice-btn:hover, .choice-btn:focus-visible { outline: none; border-color: var(--cyan); }
+    .choice-btn.active { color: var(--bg); background: var(--green); border-color: var(--yellow); box-shadow: 3px 3px 0 var(--pink); }
+    .choice-btn.active span { color: #142217; }
+    .level-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; }
+    .level-btn { min-height: 38px; text-align: center; }
+    select { width: 100%; border: 2px solid var(--purple); background: #080718; color: var(--ink); padding: 8px; font-size: .64rem; font-weight: 900; outline: none; }
+    select:focus { border-color: var(--cyan); box-shadow: 0 0 11px rgba(39,246,255,.2); }
+    .random-btn { width: 100%; border: 1px solid var(--yellow); background: rgba(255,229,104,.08); color: var(--yellow); padding: 7px; margin-top: 6px; cursor: pointer; text-transform: uppercase; font-size: .61rem; font-weight: 900; }
+    .random-btn:hover { color: var(--bg); background: var(--yellow); }
+
+    .scoreboard { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 9px; }
+    .team-card { border: 2px solid var(--cyan); background: rgba(39,246,255,.07); padding: 7px; text-align: center; position: relative; }
+    .team-card.team-b { border-color: var(--pink); background: rgba(255,54,200,.07); }
+    .team-card.inactive { opacity: .38; filter: grayscale(.4); }
+    .team-card.turn { box-shadow: inset 0 0 14px rgba(117,255,145,.18), 0 0 10px rgba(117,255,145,.22); border-color: var(--green); }
+    .team-card span { display: block; color: var(--muted); text-transform: uppercase; font-size: .54rem; }
+    .team-card strong { display: block; color: var(--cyan); font-size: 1.55rem; line-height: 1; margin-top: 3px; text-shadow: 2px 2px 0 var(--pink); }
+    .team-b strong { color: var(--pink); text-shadow: 2px 2px 0 var(--cyan); }
+    .switch-team { width: 100%; border: 1px dashed var(--green); background: transparent; color: var(--green); padding: 6px; margin-top: 6px; cursor: pointer; font-size: .57rem; font-weight: 900; text-transform: uppercase; }
+
+    .start-btn { width: 100%; min-height: 45px; margin-top: 9px; border: 2px solid var(--yellow); background: var(--pink); color: var(--bg); font-weight: 900; text-transform: uppercase; cursor: pointer; box-shadow: 4px 4px 0 var(--cyan); }
+    .start-btn:hover, .start-btn:focus-visible { outline: none; transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--yellow); }
+    .byline { color: var(--muted); text-align: center; font-size: .54rem; margin-top: 9px; line-height: 1.4; }
+    .byline strong { color: var(--yellow); }
+
+    .game-panel { min-height: 650px; }
+    .game-panel .panel-in { padding: 9px; }
+    .hud { display: grid; grid-template-columns: 150px minmax(0,1fr) 150px; gap: 7px; margin-bottom: 7px; }
+    .hud-card { border: 1px solid rgba(154,101,255,.65); background: rgba(154,101,255,.06); padding: 7px 9px; min-width: 0; }
+    .hud-card span { display: block; color: var(--muted); text-transform: uppercase; font-size: .5rem; letter-spacing: .1em; }
+    .hud-card strong { display: block; color: var(--ink); font-size: .69rem; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .timer-card { border: 2px solid var(--yellow); display: flex; align-items: center; justify-content: center; gap: 7px; color: var(--yellow); background: rgba(255,229,104,.07); }
+    .timer-card.warning { border-color: var(--red); color: var(--red); animation: pulse .65s infinite; }
+    .timer-num { font-size: 1.75rem; line-height: 1; font-weight: 900; text-shadow: 2px 2px 0 var(--pink); }
+    .timer-lab { font-size: .48rem; text-transform: uppercase; }
+
+    .target-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid rgba(117,255,145,.5); background: rgba(117,255,145,.06); padding: 7px 9px; margin-bottom: 7px; }
+    .target-bar div { min-width: 0; }
+    .target-bar span { color: var(--green); text-transform: uppercase; font-size: .51rem; letter-spacing: .1em; }
+    .target-bar strong { display: block; color: var(--ink); font-size: .68rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .progress { display: flex; gap: 4px; }
+    .progress i { display: block; width: 22px; height: 7px; border: 1px solid var(--purple); background: #090817; }
+    .progress i.done { background: var(--green); border-color: var(--green); box-shadow: 0 0 7px rgba(117,255,145,.45); }
+
+    .playfield {
+      height: 396px; position: relative; overflow: hidden; border: 3px solid var(--cyan); background:
+        linear-gradient(rgba(39,246,255,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(39,246,255,.055) 1px, transparent 1px),
+        radial-gradient(circle at 50% 100%, rgba(154,101,255,.14), transparent 55%), #070716;
+      background-size: 42px 42px, 42px 42px, auto, auto; box-shadow: inset 0 0 24px rgba(39,246,255,.1), 6px 6px 0 rgba(255,54,200,.32);
+    }
+    .playfield::before { content: "DROP ZONE"; position: absolute; top: 7px; left: 9px; color: rgba(39,246,255,.26); font-size: .52rem; letter-spacing: .15em; }
+    .lane-guides { position: absolute; inset: 0 0 74px; display: grid; pointer-events: none; }
+    .lane-guide { border-right: 1px dashed rgba(154,101,255,.2); }
+    .lane-guide:last-child { border-right: 0; }
+    .falling-block {
+      position: absolute; z-index: 4; min-height: 45px; display: grid; place-items: center; padding: 6px 4px; text-align: center;
+      color: var(--bg); background: var(--yellow); border: 2px solid #fff7b8; font-size: clamp(.56rem,1vw,.74rem); line-height: 1.08; font-weight: 900;
+      box-shadow: 4px 4px 0 var(--pink), 0 0 17px rgba(255,229,104,.48); transition: left .08s linear, top .08s linear; word-break: break-word;
+    }
+    .falling-block.hidden { display: none; }
+    .next-chip { position: absolute; top: 7px; right: 8px; z-index: 3; border: 1px solid var(--purple); background: #090817; color: var(--muted); padding: 4px 6px; max-width: 42%; font-size: .5rem; text-align: right; }
+    .next-chip strong { color: var(--purple); }
+    .slot-tray { position: absolute; left: 5px; right: 5px; bottom: 5px; height: 66px; display: grid; gap: 4px; z-index: 5; }
+    .slot { min-width: 0; border: 2px dashed rgba(154,101,255,.62); background: rgba(8,7,24,.94); display: grid; place-items: center; padding: 4px; cursor: pointer; position: relative; color: var(--muted); }
+    .slot::before { content: attr(data-number); position: absolute; top: 2px; left: 3px; color: rgba(154,101,255,.7); font-size: .45rem; }
+    .slot.filled { border-style: solid; border-color: var(--pink); color: var(--ink); background: rgba(255,54,200,.1); box-shadow: inset 0 -3px 0 rgba(255,54,200,.22); }
+    .slot.selected { border-color: var(--yellow); background: rgba(255,229,104,.15); box-shadow: 0 0 14px rgba(255,229,104,.4); }
+    .slot.correct { border-color: var(--green); background: rgba(117,255,145,.14); }
+    .slot-word { font-size: clamp(.5rem,.86vw,.68rem); line-height: 1.08; font-weight: 900; text-align: center; word-break: break-word; }
+    .playfield.error { animation: wrong .38s steps(2,end) 2; border-color: var(--red); }
+    .playfield.success { animation: success .55s ease 1; border-color: var(--green); }
+    .playfield.paused .falling-block { animation-play-state: paused; opacity: .35; }
+
+    .status-line { min-height: 32px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 7px; border: 1px dashed rgba(154,101,255,.62); background: rgba(154,101,255,.06); padding: 6px 8px; color: var(--muted); font-size: .59rem; }
+    .status-line strong { color: var(--cyan); }
+    .queue-count { color: var(--yellow); white-space: nowrap; }
+    .control-row { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; margin-top: 7px; }
+    .control-btn { min-height: 41px; border: 2px solid var(--purple); background: #090817; color: var(--ink); cursor: pointer; text-transform: uppercase; font-weight: 900; font-size: .57rem; box-shadow: 3px 3px 0 rgba(255,54,200,.35); }
+    .control-btn:hover, .control-btn:focus-visible { outline: none; border-color: var(--cyan); color: var(--cyan); transform: translate(-1px,-1px); }
+    .control-btn.drop { color: var(--bg); background: var(--yellow); border-color: var(--yellow); }
+    .control-btn.check { color: var(--bg); background: var(--green); border-color: var(--green); grid-column: span 2; }
+    .control-btn.hint { color: var(--yellow); border-color: var(--yellow); }
+    .control-btn.skip { color: var(--pink); border-color: var(--pink); }
+    .control-btn:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+
+    .lesson-card { border: 1px solid rgba(154,101,255,.6); background: rgba(154,101,255,.07); padding: 8px; margin-bottom: 8px; }
+    .lesson-card span { display: block; color: var(--purple); text-transform: uppercase; font-size: .51rem; letter-spacing: .1em; }
+    .lesson-card strong { display: block; color: var(--ink); font-size: .72rem; margin-top: 3px; line-height: 1.25; }
+    .formula { color: var(--yellow)!important; }
+    .hint-box { min-height: 66px; border: 1px dashed var(--yellow); background: rgba(255,229,104,.06); padding: 8px; color: var(--muted); font-size: .59rem; line-height: 1.38; }
+    .hint-box strong { color: var(--yellow); }
+    .legend { display: grid; gap: 6px; margin-top: 8px; }
+    .legend-row { display: grid; grid-template-columns: 37px 1fr; align-items: center; gap: 6px; color: var(--muted); font-size: .55rem; }
+    .key { display: grid; place-items: center; min-height: 25px; color: var(--yellow); border: 1px solid var(--purple); background: #080718; font-weight: 900; }
+    .points-list { display: grid; gap: 5px; margin-top: 8px; }
+    .points-row { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dotted rgba(154,101,255,.35); color: var(--muted); font-size: .56rem; padding-bottom: 4px; }
+    .points-row b { color: var(--green); }
+    .points-row.bad b { color: var(--red); }
+
+    .overlay { position: fixed; inset: 0; z-index: 5000; display: none; place-items: center; background: rgba(5,4,13,.91); backdrop-filter: blur(7px); padding: 15px; }
+    .overlay.visible { display: grid; }
+    .modal { width: min(560px,94vw); border: 4px solid var(--cyan); background: #090817; padding: 25px; text-align: center; box-shadow: 10px 10px 0 var(--pink), 0 0 34px rgba(39,246,255,.25); }
+    .modal.red { border-color: var(--red); }
+    .modal.green { border-color: var(--green); }
+    .modal-tag { display: inline-block; color: var(--bg); background: var(--cyan); padding: 4px 8px; font-size: .58rem; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; }
+    .red .modal-tag { background: var(--red); }
+    .green .modal-tag { background: var(--green); }
+    .modal h2 { color: var(--yellow); font-size: clamp(2rem,7vw,4rem); line-height: .95; margin: 11px 0; text-transform: uppercase; text-shadow: 3px 3px 0 var(--pink), -2px -2px 0 var(--cyan); }
+    .modal p { color: var(--muted); font-size: .7rem; line-height: 1.5; margin-bottom: 9px; }
+    .modal .answer { color: var(--ink); border: 1px solid var(--green); background: rgba(117,255,145,.07); padding: 9px; font-size: .73rem; font-weight: 900; }
+    .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+    .modal-btn { min-height: 43px; border: 2px solid var(--purple); background: #0c0a20; color: var(--ink); cursor: pointer; text-transform: uppercase; font-weight: 900; }
+    .modal-btn.primary { color: var(--bg); background: var(--green); border-color: var(--green); }
+    .modal-btn.danger { color: var(--red); border-color: var(--red); }
+    .big-score { color: var(--cyan)!important; font-size: 1.2rem!important; font-weight: 900; }
+    .toast { position: fixed; left: 50%; bottom: 20px; z-index: 7000; transform: translate(-50%,150%); border: 2px solid var(--green); background: #090817; color: var(--green); padding: 9px 14px; font-size: .64rem; font-weight: 900; box-shadow: 5px 5px 0 var(--pink); transition: transform .22s ease; text-align: center; }
+    .toast.visible { transform: translate(-50%,0); }
+
+    @keyframes wrong { 50% { background-color: rgba(255,79,112,.22); transform: translateX(4px); } }
+    @keyframes success { 50% { box-shadow: inset 0 0 35px rgba(117,255,145,.35), 0 0 25px rgba(117,255,145,.35); } }
+    @keyframes pulse { 50% { box-shadow: 0 0 18px rgba(255,79,112,.6); } }
+    @media (max-width: 1120px) { .layout { grid-template-columns: 225px minmax(0,1fr) 225px; } .game-panel { min-height: 680px; } .playfield { height: 420px; } }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr 1fr; } .game-panel { grid-column: 1/-1; grid-row: 1; } .setup-panel { grid-column: 1; } .lesson-panel { grid-column: 2; } }
+    @media (max-width: 650px) {
+      .app { width: 96vw; } .topbar { grid-template-columns: 1fr auto; } .back-btn { grid-row: 1; } .brand { grid-column: 1/-1; grid-row: 2; } .utility { grid-column: 2; grid-row: 1; padding: 0; } .topbar::after { display: none; }
+      h1 { white-space: normal; } .layout { grid-template-columns: 1fr; } .game-panel,.setup-panel,.lesson-panel { grid-column: 1; } .setup-panel { grid-row: 2; } .lesson-panel { grid-row: 3; }
+      .hud { grid-template-columns: 1fr 1fr; } .hud-card:nth-child(2) { grid-column: 1/-1; grid-row: 2; } .playfield { height: 430px; }
+      .control-row { grid-template-columns: repeat(4,1fr); } .control-btn.check { grid-column: span 2; } .slot-word { font-size: .48rem; } .utility-btn { font-size: 0; } .utility-btn::first-letter { font-size: .8rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration: .001ms!important; animation-iteration-count: 1!important; transition-duration: .001ms!important; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <a class="back-btn" href="../index.html">← Back to Hub</a>
+      <div class="brand"><div class="kicker">Grammar Drop Protocol v1.0</div><h1>Neon Tense <span>Tetris</span></h1></div>
+      <div class="utility"><button id="musicBtn" class="utility-btn" type="button" aria-pressed="false">♫ Music: Off</button><button id="fullscreenBtn" class="utility-btn" type="button">⛶ Fullscreen</button></div>
+    </header>
+
+    <div class="layout">
+      <aside class="panel setup-panel">
+        <div class="panel-in">
+          <div class="panel-title">01 // Mission Setup <small>configure</small></div>
+          <div class="section-label">Game Mode</div>
+          <div class="choice-row">
+            <button class="choice-btn active" type="button" data-mode="solo">Solo Mode<span>One score</span></button>
+            <button class="choice-btn" type="button" data-mode="team">Team Mode<span>A vs B</span></button>
+          </div>
+          <div class="section-label">Difficulty Level</div>
+          <div class="level-row">
+            <button class="choice-btn level-btn active" type="button" data-level="Level 1">L1<span>Beginner</span></button>
+            <button class="choice-btn level-btn" type="button" data-level="Level 2">L2<span>Intermediate</span></button>
+            <button class="choice-btn level-btn" type="button" data-level="Level 3">L3<span>Advanced</span></button>
+          </div>
+          <div class="section-label">Tense Category</div>
+          <select id="categorySelect" aria-label="Tense category"></select>
+          <button id="randomCategoryBtn" class="random-btn" type="button">⚄ Random Category</button>
+          <div class="scoreboard">
+            <div id="teamACard" class="team-card turn"><span>Team A / Solo</span><strong id="scoreA">0</strong></div>
+            <div id="teamBCard" class="team-card team-b inactive"><span>Team B</span><strong id="scoreB">0</strong></div>
+          </div>
+          <button id="switchTeamBtn" class="switch-team" type="button" disabled>Switch Active Team</button>
+          <button id="startGameBtn" class="start-btn" type="button">▶ Start 120s Mission</button>
+          <div class="byline">A classroom grammar game<br><strong>By Mr. Gilang Yudha Tama</strong></div>
+        </div>
+      </aside>
+
+      <section class="panel game-panel" aria-label="Falling word game">
+        <div class="panel-in">
+          <div class="hud">
+            <div class="hud-card"><span>Active Player</span><strong id="activeTeamText">Solo / Team A</strong></div>
+            <div class="hud-card"><span>Current Category</span><strong id="categoryText">Present Simple</strong></div>
+            <div id="timerCard" class="timer-card"><div id="timerText" class="timer-num">120</div><div class="timer-lab">seconds<br>remaining</div></div>
+          </div>
+          <div class="target-bar">
+            <div><span>Current Sentence Target</span><strong id="targetText">Press Start Mission to load a sentence.</strong></div>
+            <div id="progress" class="progress" aria-label="Victory progress"></div>
+          </div>
+          <div id="playfield" class="playfield">
+            <div id="laneGuides" class="lane-guides"></div>
+            <div id="nextChip" class="next-chip">NEXT // <strong>—</strong></div>
+            <div id="fallingBlock" class="falling-block hidden">READY</div>
+            <div id="slotTray" class="slot-tray"></div>
+          </div>
+          <div class="status-line" aria-live="polite"><span id="statusText"><strong>SYSTEM:</strong> Configure the game and press Start.</span><span id="queueText" class="queue-count">0 blocks</span></div>
+          <div class="control-row">
+            <button id="leftBtn" class="control-btn" type="button" disabled>← Left</button>
+            <button id="rightBtn" class="control-btn" type="button" disabled>Right →</button>
+            <button id="downBtn" class="control-btn" type="button" disabled>↓ Drop</button>
+            <button id="hardDropBtn" class="control-btn drop" type="button" disabled>◆ Hard Drop</button>
+            <button id="checkBtn" class="control-btn check" type="button" disabled>✓ Check Answer</button>
+            <button id="hintBtn" class="control-btn hint" type="button" disabled>Hint −20</button>
+            <button id="skipBtn" class="control-btn skip" type="button" disabled>Skip</button>
+            <button id="resetBtn" class="control-btn" type="button" disabled>Reset Blocks</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel lesson-panel">
+        <div class="panel-in">
+          <div class="panel-title">02 // Grammar Scan <small>learning data</small></div>
+          <div class="lesson-card"><span>Focus</span><strong id="focusText">Present Simple</strong></div>
+          <div class="lesson-card"><span>Level</span><strong id="levelText">Level 1 • Beginner</strong></div>
+          <div class="lesson-card"><span>Core Formula</span><strong id="formulaText" class="formula">subject + base verb</strong></div>
+          <div id="hintBox" class="hint-box"><strong>Hint offline.</strong><br>Use the Hint button when you need grammar support.</div>
+          <div class="section-label">Keyboard Controls</div>
+          <div class="legend">
+            <div class="legend-row"><span class="key">← A</span><span>Move word left</span></div>
+            <div class="legend-row"><span class="key">→ D</span><span>Move word right</span></div>
+            <div class="legend-row"><span class="key">↓ S</span><span>Soft drop</span></div>
+            <div class="legend-row"><span class="key">SPACE</span><span>Hard drop</span></div>
+            <div class="legend-row"><span class="key">ENTER</span><span>Check sentence</span></div>
+            <div class="legend-row"><span class="key">P / ESC</span><span>Pause game</span></div>
+          </div>
+          <div class="section-label">Scoring Protocol</div>
+          <div class="points-list">
+            <div class="points-row"><span>Correct sentence</span><b>+100</b></div>
+            <div class="points-row"><span>Fast answer ≤15s</span><b>+50</b></div>
+            <div class="points-row bad"><span>Wrong order</span><b>−25</b></div>
+            <div class="points-row bad"><span>Use hint</span><b>−20</b></div>
+            <div class="points-row"><span>Skip sentence</span><b>0</b></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div id="pauseOverlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="pauseTitle"><div class="modal"><span class="modal-tag">System Hold</span><h2 id="pauseTitle">Paused</h2><p>The timer and falling block are frozen.</p><div class="modal-actions"><button id="resumeBtn" class="modal-btn primary" type="button">Resume</button><button id="restartGameBtn" class="modal-btn danger" type="button">Restart Game</button></div></div></div>
+  <div id="feedbackOverlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle"><div class="modal green"><span class="modal-tag">Sentence Locked</span><h2 id="feedbackTitle">Correct!</h2><p id="feedbackPoints" class="big-score">+100 points</p><div id="correctAnswer" class="answer"></div><p id="explanationText"></p><div class="modal-actions"><button id="nextSentenceBtn" class="modal-btn primary" type="button">Next Sentence</button><button id="feedbackPauseBtn" class="modal-btn" type="button">Keep Reading</button></div></div></div>
+  <div id="endOverlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="endTitle"><div id="endModal" class="modal red"><span id="endTag" class="modal-tag">Transmission Ended</span><h2 id="endTitle">Game Over</h2><p id="endMessage"></p><p id="endScore" class="big-score"></p><div class="modal-actions"><button id="playAgainBtn" class="modal-btn primary" type="button">Play Again</button><a class="modal-btn danger" href="../index.html" style="display:grid;place-items:center;text-decoration:none">Back to Hub</a></div></div></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    /* ================================================================
+       EASY-TO-EDIT CONTENT BANK
+       Add more objects using the same six fields. Keep each block's
+       punctuation attached, and ensure the blocks join to the sentence.
+       ================================================================ */
+    const sentenceBank = [
+      { tense:"Present Simple", level:"Level 1", sentence:"She plays tennis every Saturday.", blocks:["every Saturday.","plays","She","tennis"], hint:"Use the base verb with -s for she/he/it.", explanation:"Present simple describes routines and repeated actions." },
+      { tense:"Present Continuous", level:"Level 1", sentence:"They are studying English now.", blocks:["English","They","now.","are studying"], hint:"Use am/is/are + verb-ing.", explanation:"Present continuous describes an action happening now." },
+      { tense:"Present Perfect", level:"Level 1", sentence:"I have finished my homework.", blocks:["my homework.","have finished","I"], hint:"Use have/has + past participle.", explanation:"Present perfect connects a completed action to the present." },
+      { tense:"Present Perfect Continuous", level:"Level 1", sentence:"He has been reading for an hour.", blocks:["for an hour.","reading","He","has been"], hint:"Use have/has been + verb-ing.", explanation:"This tense emphasizes the duration of an action continuing until now." },
+      { tense:"Past Simple", level:"Level 1", sentence:"We visited Bali last year.", blocks:["last year.","Bali","We","visited"], hint:"Use the past form of the verb.", explanation:"Past simple describes a finished action at a finished past time." },
+      { tense:"Past Continuous", level:"Level 1", sentence:"The children were sleeping at nine.", blocks:["at nine.","were sleeping","The children"], hint:"Use was/were + verb-ing.", explanation:"Past continuous describes an action in progress at a past time." },
+      { tense:"Past Perfect", level:"Level 1", sentence:"She had left before noon.", blocks:["before noon.","had left","She"], hint:"Use had + past participle.", explanation:"Past perfect shows an action completed before another past point." },
+      { tense:"Past Perfect Continuous", level:"Level 1", sentence:"They had been waiting for an hour.", blocks:["They","for an hour.","had been","waiting"], hint:"Use had been + verb-ing.", explanation:"This tense emphasizes duration before a past point." },
+      { tense:"Future Simple", level:"Level 1", sentence:"I will call you tomorrow.", blocks:["you","tomorrow.","I","will call"], hint:"Use will + base verb.", explanation:"Future simple is used for predictions, promises, and spontaneous decisions." },
+      { tense:"Be Going To", level:"Level 1", sentence:"We are going to watch a movie.", blocks:["a movie.","We","are going to","watch"], hint:"Use am/is/are going to + base verb.", explanation:"Be going to expresses a plan or strong prediction." },
+      { tense:"Future Continuous", level:"Level 1", sentence:"She will be working at eight.", blocks:["at eight.","will be","She","working"], hint:"Use will be + verb-ing.", explanation:"Future continuous describes an action in progress at a future time." },
+      { tense:"Future Perfect", level:"Level 1", sentence:"They will have arrived by noon.", blocks:["by noon.","arrived","They","will have"], hint:"Use will have + past participle.", explanation:"Future perfect shows completion before a future deadline." },
+      { tense:"Modal Verbs", level:"Level 1", sentence:"You should drink more water.", blocks:["more water.","should","You","drink"], hint:"Use modal + base verb without to.", explanation:"Should gives advice or a recommendation." },
+      { tense:"Passive Voice", level:"Level 1", sentence:"The room is cleaned every day.", blocks:["every day.","is cleaned","The room"], hint:"Use be + past participle.", explanation:"Passive voice focuses on the action or receiver, not the doer." },
+      { tense:"Irregular Verbs", level:"Level 1", sentence:"He went to school early.", blocks:["early.","to school","went","He"], hint:"The past form of go is went.", explanation:"Irregular verbs do not form the past with -ed." },
+      { tense:"Mixed Tenses", level:"Level 1", sentence:"I am tired because I worked late.", blocks:["because","I am tired","late.","I worked"], hint:"Use present for the result and past for the completed cause.", explanation:"The present state is caused by a finished past action." },
+
+      { tense:"Present Simple", level:"Level 2", sentence:"Does your brother walk to school every day?", blocks:["every day?","walk","Does","to school","your brother"], hint:"Question: Does + subject + base verb?", explanation:"Use does for a present simple question with he/she/it." },
+      { tense:"Present Continuous", level:"Level 2", sentence:"Why are they not wearing their uniforms today?", blocks:["their uniforms","Why","today?","are they","not wearing"], hint:"Question word + are + subject + not + verb-ing.", explanation:"Present continuous can describe a temporary situation happening today." },
+      { tense:"Present Perfect", level:"Level 2", sentence:"She has not seen that film yet.", blocks:["yet.","has not seen","She","that film"], hint:"Negative: has/have not + past participle.", explanation:"Yet commonly appears in present perfect negatives and questions." },
+      { tense:"Present Perfect Continuous", level:"Level 2", sentence:"Have you been waiting here since noon?", blocks:["here","Have you","since noon?","been waiting"], hint:"Question: Have/Has + subject + been + verb-ing?", explanation:"Since marks the starting point of an action continuing until now." },
+      { tense:"Past Simple", level:"Level 2", sentence:"Did he forget his keys yesterday?", blocks:["his keys","Did","yesterday?","he forget"], hint:"After did, use the base verb, not the past form.", explanation:"Did carries the past tense, so forget stays in the base form." },
+      { tense:"Past Continuous", level:"Level 2", sentence:"We were not sleeping when you called.", blocks:["when","were not sleeping","you called.","We"], hint:"Use past continuous for the background and past simple for the interruption.", explanation:"The longer action was in progress when a shorter action happened." },
+      { tense:"Past Perfect", level:"Level 2", sentence:"Had they finished dinner before the guests arrived?", blocks:["before","Had they","the guests arrived?","finished dinner"], hint:"Question: Had + subject + past participle?", explanation:"Past perfect identifies the earlier of two past actions." },
+      { tense:"Past Perfect Continuous", level:"Level 2", sentence:"She had not been feeling well for several days.", blocks:["for several days.","feeling well","She","had not been"], hint:"Negative: had not been + verb-ing.", explanation:"This form emphasizes an ongoing condition before a past point." },
+      { tense:"Future Simple", level:"Level 2", sentence:"Will you help me with this project tomorrow?", blocks:["with this project","Will you","tomorrow?","help me"], hint:"Question: Will + subject + base verb?", explanation:"Will can be used to ask for help or make a request." },
+      { tense:"Be Going To", level:"Level 2", sentence:"They are not going to cancel the match.", blocks:["the match.","are not going to","They","cancel"], hint:"Negative: am/is/are not going to + base verb.", explanation:"This form denies a future plan or intention." },
+      { tense:"Future Continuous", level:"Level 2", sentence:"Will she be using the lab this afternoon?", blocks:["the lab","Will she","this afternoon?","be using"], hint:"Question: Will + subject + be + verb-ing?", explanation:"Future continuous asks about an activity in progress at a future time." },
+      { tense:"Future Perfect", level:"Level 2", sentence:"He will not have completed the report by Friday.", blocks:["the report","He","by Friday.","will not have completed"], hint:"Negative: will not have + past participle.", explanation:"The sentence predicts non-completion before a future deadline." },
+      { tense:"Modal Verbs", level:"Level 2", sentence:"Students must not use phones during the test.", blocks:["during the test.","must not","Students","use phones"], hint:"Use must not + base verb for prohibition.", explanation:"Must not expresses a strong rule against an action." },
+      { tense:"Passive Voice", level:"Level 2", sentence:"Was the package delivered this morning?", blocks:["delivered","Was","this morning?","the package"], hint:"Question: Was/Were + subject + past participle?", explanation:"The past passive asks about a completed action when the doer is unimportant." },
+      { tense:"Irregular Verbs", level:"Level 2", sentence:"The wind blew the papers across the yard.", blocks:["across the yard.","blew","The wind","the papers"], hint:"The past form of blow is blew.", explanation:"Blew is an irregular past form, not blowed." },
+      { tense:"Mixed Tenses", level:"Level 2", sentence:"While I was cooking, the lights went out.", blocks:["the lights","While","went out.","I was cooking,"], hint:"Use past continuous after while and past simple for the interruption.", explanation:"The ongoing action provides the background for a sudden past event." },
+
+      { tense:"Present Simple", level:"Level 3", sentence:"The system automatically shuts down whenever it detects a threat.", blocks:["whenever","automatically shuts down","it detects","The system","a threat."], hint:"Use present simple in both clauses for an automatic repeated process.", explanation:"Present simple states how a system regularly behaves under a condition." },
+      { tense:"Present Continuous", level:"Level 3", sentence:"More students are choosing courses that combine technology with art.", blocks:["courses","More students","technology with art.","are choosing","that combine"], hint:"Use are + verb-ing for a developing trend.", explanation:"Present continuous can describe a changing trend around the present." },
+      { tense:"Present Perfect", level:"Level 3", sentence:"Researchers have discovered several patterns that were previously overlooked.", blocks:["that were","Researchers","several patterns","previously overlooked.","have discovered"], hint:"Use have + past participle for a discovery relevant now.", explanation:"The discovery is complete, but its result matters in the present." },
+      { tense:"Present Perfect Continuous", level:"Level 3", sentence:"The committee has been debating the proposal since the data was published.", blocks:["since","The committee","the proposal","has been debating","the data was published."], hint:"Use has been + verb-ing, followed by a since clause.", explanation:"The debate began in the past and has continued until now." },
+      { tense:"Past Simple", level:"Level 3", sentence:"The witness gave an account that contradicted the official report.", blocks:["that contradicted","gave","The witness","the official report.","an account"], hint:"Use irregular past gave and regular past contradicted.", explanation:"Past simple reports two completed events in a finished context." },
+      { tense:"Past Continuous", level:"Level 3", sentence:"While the engineers were testing the prototype, the main circuit suddenly failed.", blocks:["the prototype,","the main circuit","While the engineers","suddenly failed.","were testing"], hint:"Use were testing for the background and failed for the interruption.", explanation:"Past continuous frames an action interrupted by a past simple event." },
+      { tense:"Past Perfect", level:"Level 3", sentence:"By the time the audit began, the company had already corrected the error.", blocks:["the company","By the time","the error.","the audit began,","had already corrected"], hint:"The earlier action needs had + past participle.", explanation:"The correction was complete before the later audit began." },
+      { tense:"Past Perfect Continuous", level:"Level 3", sentence:"They had been negotiating for months before both sides finally reached an agreement.", blocks:["for months","They","an agreement.","before both sides","had been negotiating","finally reached"], hint:"Use had been + verb-ing to emphasize duration before another past event.", explanation:"The negotiation continued for a period before the agreement was reached." },
+      { tense:"Future Simple", level:"Level 3", sentence:"Unless we reduce the risks now, future generations will face serious consequences.", blocks:["future generations","Unless","serious consequences.","we reduce the risks now,","will face"], hint:"Use present simple after unless and will in the result clause.", explanation:"First conditional patterns use a present condition and a future result." },
+      { tense:"Be Going To", level:"Level 3", sentence:"The council is going to introduce a policy that will protect local businesses.", blocks:["a policy","The council","local businesses.","is going to introduce","that will protect"], hint:"Use is going to for the plan and will for its expected effect.", explanation:"Be going to presents an intention already decided before speaking." },
+      { tense:"Future Continuous", level:"Level 3", sentence:"This time next year, scientists will be monitoring the restored ecosystem.", blocks:["the restored ecosystem.","scientists","This time next year,","will be monitoring"], hint:"Use will be + verb-ing for an action in progress at a future point.", explanation:"The monitoring will be underway at a specified future time." },
+      { tense:"Future Perfect", level:"Level 3", sentence:"By 2035, the city will have converted all public buses to clean energy.", blocks:["all public buses","By 2035,","to clean energy.","the city","will have converted"], hint:"Use will have + past participle before a future deadline.", explanation:"The conversion is expected to be complete by 2035." },
+      { tense:"Modal Verbs", level:"Level 3", sentence:"The team might have avoided the delay if it had checked the data.", blocks:["the delay","The team","the data.","if it had checked","might have avoided"], hint:"Use might have + past participle for an uncertain past possibility.", explanation:"The modal perfect imagines a different possible past result." },
+      { tense:"Passive Voice", level:"Level 3", sentence:"The final decision must be approved before the results can be published.", blocks:["before","must be approved","The final decision","can be published.","the results"], hint:"Use modal + be + past participle in both passive clauses.", explanation:"Two modal passive forms focus on actions rather than their agents." },
+      { tense:"Irregular Verbs", level:"Level 3", sentence:"Had she known the truth, she would have chosen differently.", blocks:["the truth,","Had she known","differently.","she would have chosen"], hint:"Use known after had and chosen after would have.", explanation:"Known and chosen are irregular past participles in an inverted third conditional." },
+      { tense:"Mixed Tenses", level:"Level 3", sentence:"Although he had prepared carefully, he is changing his plan because new evidence has emerged.", blocks:["he is changing","Although","because","his plan","he had prepared carefully,","new evidence has emerged."], hint:"Combine past perfect, present continuous, and present perfect logically.", explanation:"Preparation happened earlier, the plan is changing now, and new evidence has recently appeared." }
+    ];
+
+    const CATEGORY_FORMULAS = {
+      "Present Simple":"subject + base verb / verb-s", "Present Continuous":"subject + am/is/are + verb-ing", "Present Perfect":"subject + have/has + past participle",
+      "Present Perfect Continuous":"subject + have/has been + verb-ing", "Past Simple":"subject + past verb", "Past Continuous":"subject + was/were + verb-ing",
+      "Past Perfect":"subject + had + past participle", "Past Perfect Continuous":"subject + had been + verb-ing", "Future Simple":"subject + will + base verb",
+      "Be Going To":"subject + am/is/are going to + verb", "Future Continuous":"subject + will be + verb-ing", "Future Perfect":"subject + will have + past participle",
+      "Modal Verbs":"subject + modal + base verb", "Passive Voice":"subject + be + past participle", "Irregular Verbs":"memorize special past forms", "Mixed Tenses":"match each time relationship"
+    };
+    const LEVEL_NAMES = {"Level 1":"Beginner","Level 2":"Intermediate","Level 3":"Advanced"};
+    const CATEGORIES = [...new Set(sentenceBank.map(item => item.tense))];
+    const SESSION_GOAL = 5;
+
+    const state = {
+      mode:"solo", level:"Level 1", category:"Present Simple", activeTeam:"A", scoreA:0, scoreB:0,
+      timeLeft:120, timerId:null, fallId:null, active:false, paused:false, feedback:false,
+      current:null, queue:[], placed:[], fallingWord:null, lane:0, row:0, selectedSlot:null,
+      hintUsed:false, sentenceStartedAt:0, correctCount:0, lastItem:null, toastId:null
+    };
+    const $ = id => document.getElementById(id);
+
+    const AudioSystem = (() => {
+      let ctx=null, musicOn=false, musicId=null, step=0;
+      function init(){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;if(!ctx)ctx=new C();if(ctx.state==="suspended")ctx.resume();return ctx}
+      function tone(f,d=.07,type="square",v=.03,delay=0){const c=init();if(!c)return;const t=c.currentTime+delay,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+d+.03)}
+      function sfx(name){if(name==="move")tone(480,.025,"square",.015);if(name==="drop"){tone(180,.06,"square",.035);tone(90,.1,"square",.03,.05)}if(name==="correct")[523,659,784].forEach((f,i)=>tone(f,.1,"square",.04,i*.08));if(name==="wrong")[260,180].forEach((f,i)=>tone(f,.15,"sawtooth",.045,i*.11));if(name==="hint")tone(720,.12,"triangle",.03);if(name==="time")[330,247,196].forEach((f,i)=>tone(f,.18,"sawtooth",.045,i*.16));if(name==="start")[220,440,880].forEach((f,i)=>tone(f,.08,"square",.035,i*.07))}
+      function tick(){const bass=[82,82,110,82,73,73,98,73],lead=[330,392,494,392,294,349,440,349],i=step%8;tone(bass[i],.18,"sawtooth",.014);if(step%2===0)tone(lead[i],.06,"square",.007,.02);step++}
+      function toggle(){init();musicOn=!musicOn;if(musicOn){step=0;tick();musicId=setInterval(tick,240)}else{clearInterval(musicId);musicId=null}const b=$("musicBtn");b.textContent=musicOn?"♫ Music: On":"♫ Music: Off";b.classList.toggle("active",musicOn);b.setAttribute("aria-pressed",String(musicOn))}
+      return{init,sfx,toggle};
+    })();
+
+    function shuffle(items){const copy=[...items];for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
+    function normalize(text){return text.replace(/\s+/g," ").trim().toLowerCase()}
+    function activeScore(){return state.activeTeam==="A"?state.scoreA:state.scoreB}
+    function changeScore(delta){if(state.activeTeam==="A")state.scoreA+=delta;else state.scoreB+=delta;renderScores()}
+    function showToast(text){clearTimeout(state.toastId);$("toast").textContent=text;$("toast").classList.add("visible");state.toastId=setTimeout(()=>$("toast").classList.remove("visible"),2200)}
+    function setStatus(text,tone="cyan"){$("statusText").innerHTML=`<strong style="color:var(--${tone})">SYSTEM:</strong> ${text}`}
+
+    function populateCategories(){const select=$("categorySelect");select.innerHTML='<option value="Random Mix">⚄ Random Mix</option>';CATEGORIES.forEach(cat=>select.add(new Option(cat,cat)));select.value=state.category}
+    function renderProgress(){const p=$("progress");p.innerHTML="";for(let i=0;i<SESSION_GOAL;i++){const dot=document.createElement("i");dot.classList.toggle("done",i<state.correctCount);p.appendChild(dot)}}
+    function renderScores(){$("scoreA").textContent=state.scoreA;$("scoreB").textContent=state.scoreB;$("teamBCard").classList.toggle("inactive",state.mode!=="team");$("teamACard").classList.toggle("turn",state.activeTeam==="A");$("teamBCard").classList.toggle("turn",state.mode==="team"&&state.activeTeam==="B");$("activeTeamText").textContent=state.mode==="solo"?"Solo / Team A":`Team ${state.activeTeam}`}
+    function setMode(mode){state.mode=mode;state.activeTeam="A";document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));$("switchTeamBtn").disabled=mode!=="team";renderScores();setStatus(`${mode==="solo"?"Solo":"Team"} Mode selected.`)}
+    function setLevel(level){state.level=level;document.querySelectorAll("[data-level]").forEach(b=>b.classList.toggle("active",b.dataset.level===level));$("levelText").textContent=`${level} • ${LEVEL_NAMES[level]}`;if(state.active)setStatus(`${level} will apply to the next sentence.`)}
+    function setCategory(category){state.category=category;if(category!=="Random Mix"){$("focusText").textContent=category;$("formulaText").textContent=CATEGORY_FORMULAS[category]}if(state.active)setStatus(`${category} will apply to the next sentence.`)}
+    function randomCategory(){const pool=CATEGORIES;const cat=pool[Math.floor(Math.random()*pool.length)];state.category=cat;$("categorySelect").value=cat;setCategory(cat);showToast(`Random category // ${cat}`);AudioSystem.sfx("move")}
+    function switchTeam(){if(state.mode!=="team")return;state.activeTeam=state.activeTeam==="A"?"B":"A";renderScores();showToast(`Team ${state.activeTeam}'s turn`)}
+
+    function chooseSentence(){let pool=sentenceBank.filter(item=>item.level===state.level&&(state.category==="Random Mix"||item.tense===state.category));if(!pool.length)pool=sentenceBank.filter(item=>item.level===state.level);if(pool.length>1&&state.lastItem)pool=pool.filter(item=>item!==state.lastItem);const item=pool[Math.floor(Math.random()*pool.length)];state.lastItem=item;return item}
+    function startGame(){clearIntervals();state.scoreA=0;state.scoreB=0;state.activeTeam="A";state.timeLeft=120;state.correctCount=0;state.active=true;state.paused=false;state.feedback=false;renderScores();renderProgress();$("endOverlay").classList.remove("visible");$("pauseOverlay").classList.remove("visible");$("feedbackOverlay").classList.remove("visible");loadSentence();state.timerId=setInterval(timerTick,1000);state.fallId=setInterval(stepFall,720);setControls(true);updateTimer();AudioSystem.sfx("start")}
+    function clearIntervals(){clearInterval(state.timerId);clearInterval(state.fallId);state.timerId=null;state.fallId=null}
+    function loadSentence(){state.current=chooseSentence();state.queue=shuffle(state.current.blocks);state.placed=Array(state.current.blocks.length).fill(null);state.fallingWord=null;state.selectedSlot=null;state.hintUsed=false;state.sentenceStartedAt=Date.now();state.feedback=false;$("feedbackOverlay").classList.remove("visible");$("playfield").className="playfield";$("targetText").textContent=`Build a correct ${state.current.tense} sentence (${state.current.blocks.length} blocks).`;$("categoryText").textContent=state.current.tense;$("focusText").textContent=state.current.tense;$("levelText").textContent=`${state.current.level} • ${LEVEL_NAMES[state.current.level]}`;$("formulaText").textContent=CATEGORY_FORMULAS[state.current.tense];$("hintBox").innerHTML="<strong>Hint offline.</strong><br>Use the Hint button when you need grammar support.";buildBoard();spawnNext();setStatus("Move the falling word into the correct sentence slot.");renderQueue()}
+    function buildBoard(){const count=state.placed.length,tray=$("slotTray"),guides=$("laneGuides");tray.innerHTML="";guides.innerHTML="";tray.style.gridTemplateColumns=`repeat(${count},minmax(0,1fr))`;guides.style.gridTemplateColumns=`repeat(${count},minmax(0,1fr))`;state.placed.forEach((word,i)=>{const slot=document.createElement("button");slot.type="button";slot.className="slot";slot.dataset.index=i;slot.dataset.number=String(i+1).padStart(2,"0");slot.addEventListener("click",()=>slotClick(i));tray.appendChild(slot);const guide=document.createElement("div");guide.className="lane-guide";guides.appendChild(guide)});renderSlots();requestAnimationFrame(positionFalling)}
+    function renderSlots(){[...$("slotTray").children].forEach((slot,i)=>{const word=state.placed[i];slot.classList.toggle("filled",Boolean(word));slot.classList.toggle("selected",state.selectedSlot===i);slot.innerHTML=word?`<span class="slot-word">${word}</span>`:""})}
+    function renderQueue(){$("queueText").textContent=`${state.queue.length+(state.fallingWord?1:0)} blocks`;const next=state.queue[0]||"—";$("nextChip").innerHTML=`NEXT // <strong>${next}</strong>`}
+    function spawnNext(){if(!state.queue.length){state.fallingWord=null;$("fallingBlock").classList.add("hidden");renderQueue();setStatus("All blocks placed. Press Check Answer or swap two slots.","yellow");return}state.fallingWord=state.queue.shift();state.row=0;const empties=state.placed.map((w,i)=>w===null?i:-1).filter(i=>i>=0);state.lane=empties.length?empties[Math.floor(empties.length/2)]:0;$("fallingBlock").textContent=state.fallingWord;$("fallingBlock").classList.remove("hidden");positionFalling();renderQueue()}
+    function positionFalling(){if(!state.fallingWord)return;const field=$("playfield"),block=$("fallingBlock"),cols=state.placed.length;if(!field.clientWidth)return;const gap=5,laneWidth=(field.clientWidth-10)/cols;const maxTop=field.clientHeight-128;block.style.width=`${Math.max(42,laneWidth-gap)}px`;block.style.left=`${5+state.lane*laneWidth+gap/2}px`;block.style.top=`${10+(maxTop-10)*(state.row/5)}px`}
+    function move(direction){if(!canControl()||!state.fallingWord)return;state.lane=Math.max(0,Math.min(state.placed.length-1,state.lane+direction));positionFalling();AudioSystem.sfx("move")}
+    function stepFall(){if(!canControl()||!state.fallingWord)return;if(state.row<5){state.row++;positionFalling()}else landBlock()}
+    function softDrop(){if(!canControl()||!state.fallingWord)return;stepFall();AudioSystem.sfx("move")}
+    function hardDrop(){if(!canControl()||!state.fallingWord)return;state.row=5;positionFalling();landBlock()}
+    function landBlock(){if(state.placed[state.lane]){state.row=0;setStatus("That slot is occupied. Move to an empty lane.","red");flashField("error");AudioSystem.sfx("wrong");positionFalling();return}state.placed[state.lane]=state.fallingWord;state.fallingWord=null;renderSlots();AudioSystem.sfx("drop");spawnNext()}
+    function slotClick(index){if(!state.active||state.paused||state.feedback)return;if(state.fallingWord){state.lane=index;positionFalling();AudioSystem.sfx("move");return}if(!state.placed[index])return;if(state.selectedSlot===null){state.selectedSlot=index;setStatus("First block selected. Choose another slot to swap.","yellow")}else if(state.selectedSlot===index){state.selectedSlot=null}else{[state.placed[state.selectedSlot],state.placed[index]]=[state.placed[index],state.placed[state.selectedSlot]];state.selectedSlot=null;setStatus("Blocks swapped. Check when the order looks correct.");AudioSystem.sfx("move")}renderSlots()}
+    function canControl(){return state.active&&!state.paused&&!state.feedback}
+    function checkAnswer(){if(!canControl())return;if(state.fallingWord||state.placed.some(x=>!x)){setStatus("Place every falling block before checking.","yellow");showToast("Sentence incomplete");return}const attempt=state.placed.join(" ");if(normalize(attempt)===normalize(state.current.sentence))correctAnswer();else wrongAnswer()}
+    function correctAnswer(){const elapsed=(Date.now()-state.sentenceStartedAt)/1000,fast=elapsed<=15,points=100+(fast?50:0);changeScore(points);state.correctCount++;state.feedback=true;renderProgress();$("playfield").classList.add("success");[...$("slotTray").children].forEach(s=>s.classList.add("correct"));$("feedbackPoints").textContent=`+${points} points${fast?" // FAST BONUS":""}`;$("correctAnswer").textContent=state.current.sentence;$("explanationText").textContent=state.current.explanation;$("feedbackOverlay").classList.add("visible");$("nextSentenceBtn").focus();AudioSystem.sfx("correct")}
+    function wrongAnswer(){changeScore(-25);state.selectedSlot=null;renderSlots();flashField("error");setStatus("Wrong order −25. Click two blocks to swap, then retry.","red");showToast("Order rejected // rearrange and retry");AudioSystem.sfx("wrong")}
+    function useHint(){if(!canControl()||!state.current)return;if(!state.hintUsed){changeScore(-20);state.hintUsed=true;showToast("Hint accessed // −20 points")}$("hintBox").innerHTML=`<strong>Grammar hint:</strong><br>${state.current.hint}`;setStatus("Grammar hint displayed in the right panel.","yellow");AudioSystem.sfx("hint")}
+    function skipSentence(){if(!canControl()||!state.current)return;showToast("Sentence skipped // no points");if(state.mode==="team")switchTeam();loadSentence()}
+    function resetBlocks(){if(!canControl()||!state.current)return;state.queue=shuffle(state.current.blocks);state.placed=Array(state.current.blocks.length).fill(null);state.fallingWord=null;state.selectedSlot=null;state.sentenceStartedAt=Date.now();buildBoard();spawnNext();setStatus("Blocks reset. Build the same sentence again.");showToast("Blocks reset // score unchanged")}
+    function nextSentence(){if(state.correctCount>=SESSION_GOAL){showVictory();return}if(state.mode==="team")switchTeam();loadSentence()}
+    function flashField(name){const f=$("playfield");f.classList.remove(name);void f.offsetWidth;f.classList.add(name);setTimeout(()=>f.classList.remove(name),850)}
+    function timerTick(){if(!state.active||state.paused||state.feedback)return;state.timeLeft--;updateTimer();if(state.timeLeft<=5&&state.timeLeft>0)AudioSystem.sfx("move");if(state.timeLeft<=0)endGame(false)}
+    function updateTimer(){$("timerText").textContent=state.timeLeft;$("timerCard").classList.toggle("warning",state.timeLeft<=15&&state.timeLeft>0)}
+    function pauseGame(force){if(!state.active||state.feedback)return;state.paused=force!==undefined?force:!state.paused;$("pauseOverlay").classList.toggle("visible",state.paused);$("playfield").classList.toggle("paused",state.paused);if(state.paused)$("resumeBtn").focus();setStatus(state.paused?"Game paused.":"Game resumed.");AudioSystem.sfx("move")}
+    function restartGame(){state.active=false;state.paused=false;clearIntervals();$("pauseOverlay").classList.remove("visible");startGame()}
+    function showVictory(){endGame(true)}
+    function endGame(victory){state.active=false;state.feedback=false;clearIntervals();$("feedbackOverlay").classList.remove("visible");$("endOverlay").classList.add("visible");$("endModal").className=`modal ${victory?"green":"red"}`;$("endTag").textContent=victory?"Grammar Grid Cleared":"Transmission Ended";$("endTitle").textContent=victory?"Victory!":"Game Over";let result;if(state.mode==="team")result=state.scoreA===state.scoreB?"Team battle ended in a tie.":`Team ${state.scoreA>state.scoreB?"A":"B"} wins the grammar battle!`;else result=victory?"You built five correct sentences before time expired.":"The 120-second mission has ended.";$("endMessage").textContent=result;$("endScore").textContent=state.mode==="team"?`Team A ${state.scoreA} // Team B ${state.scoreB}`:`Final score // ${state.scoreA}`;$("playAgainBtn").focus();AudioSystem.sfx(victory?"correct":"time");setControls(false)}
+    function setControls(enabled){["leftBtn","rightBtn","downBtn","hardDropBtn","checkBtn","hintBtn","skipBtn","resetBtn"].forEach(id=>$(id).disabled=!enabled)}
+    async function toggleFullscreen(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){showToast("Fullscreen unavailable in this browser")}}
+
+    document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
+    document.querySelectorAll("[data-level]").forEach(b=>b.addEventListener("click",()=>setLevel(b.dataset.level)));
+    $("categorySelect").addEventListener("change",e=>setCategory(e.target.value));$("randomCategoryBtn").addEventListener("click",randomCategory);$("switchTeamBtn").addEventListener("click",switchTeam);
+    $("startGameBtn").addEventListener("click",startGame);$("leftBtn").addEventListener("click",()=>move(-1));$("rightBtn").addEventListener("click",()=>move(1));$("downBtn").addEventListener("click",softDrop);$("hardDropBtn").addEventListener("click",hardDrop);$("checkBtn").addEventListener("click",checkAnswer);$("hintBtn").addEventListener("click",useHint);$("skipBtn").addEventListener("click",skipSentence);$("resetBtn").addEventListener("click",resetBlocks);
+    $("resumeBtn").addEventListener("click",()=>pauseGame(false));$("restartGameBtn").addEventListener("click",restartGame);$("nextSentenceBtn").addEventListener("click",nextSentence);$("feedbackPauseBtn").addEventListener("click",()=>showToast("Read the explanation, then continue when ready."));$("playAgainBtn").addEventListener("click",startGame);$("musicBtn").addEventListener("click",AudioSystem.toggle);$("fullscreenBtn").addEventListener("click",toggleFullscreen);
+    document.addEventListener("pointerdown",AudioSystem.init,{once:true});
+    document.addEventListener("keydown",e=>{if(e.target instanceof HTMLSelectElement||e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement)return;const k=e.key.toLowerCase();if(k==="arrowleft"||k==="a"){e.preventDefault();move(-1)}if(k==="arrowright"||k==="d"){e.preventDefault();move(1)}if(k==="arrowdown"||k==="s"){e.preventDefault();softDrop()}if(k===" "){e.preventDefault();hardDrop()}if(k==="enter"){e.preventDefault();checkAnswer()}if(k==="p"||k==="escape"){e.preventDefault();pauseGame()}});
+    window.addEventListener("resize",positionFalling);
+
+    populateCategories();renderScores();renderProgress();updateTimer();$("focusText").textContent=state.category;$("formulaText").textContent=CATEGORY_FORMULAS[state.category];
+  </script>
+</body>
+</html>
