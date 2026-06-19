@@ -534,6 +534,20 @@
         display: none;
       }
     }
+    /* HIDE PAIRS LIST FROM STUDENTS */
+.layout {
+  grid-template-columns: 290px minmax(0, 1fr);
+}
+
+.layout > aside.panel:last-child {
+  display: none;
+}
+
+@media (max-width: 1050px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
   </style>
 </head>
 
