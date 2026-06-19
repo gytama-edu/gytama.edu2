@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Neon Hot Seat</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#050510;--panel:rgba(13,16,35,.94);--cyan:#22f7ff;--pink:#ff2bd6;--yellow:#ffe66d;--green:#39ff88;--red:#ff4d6d;--purple:#8f4dff;--text:#f4f7ff;--muted:#aab2dd}
+body{min-height:100vh;font-family:"Courier New",monospace;color:var(--text);background:radial-gradient(circle at top left,rgba(255,43,214,.24),transparent 34%),radial-gradient(circle at top right,rgba(34,247,255,.22),transparent 34%),linear-gradient(180deg,#050510,#11142b 55%,#04040a);overflow:hidden}
+body:before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(34,247,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,43,214,.05) 1px,transparent 1px);background-size:34px 34px;pointer-events:none;z-index:-2}
+body:after{content:"";position:fixed;inset:0;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.035) 0px,rgba(255,255,255,.035) 1px,transparent 2px,transparent 6px);pointer-events:none;z-index:-1}
+.page{width:min(1400px,98%);height:100vh;margin:auto;padding:8px 0;display:flex;flex-direction:column}
+.topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:6px}
+.back-link{color:#050510;background:var(--yellow);border:2px solid var(--cyan);text-decoration:none;padding:7px 11px;font-weight:bold;box-shadow:4px 4px 0 var(--pink);text-transform:uppercase;font-size:.78rem}
+.brand{color:var(--green);font-weight:bold;text-shadow:0 0 12px var(--green);font-size:.82rem}
+header{border:3px solid var(--cyan);background:rgba(5,7,18,.82);padding:8px 14px;margin-bottom:8px;box-shadow:0 0 18px rgba(34,247,255,.5),inset 0 0 24px rgba(255,43,214,.16)}
+.badge{display:inline-block;color:#050510;background:var(--green);padding:4px 7px;font-weight:bold;margin-bottom:5px;box-shadow:4px 4px 0 var(--pink);text-transform:uppercase;font-size:.68rem}
+h1{font-size:clamp(1.6rem,3vw,2.7rem);text-transform:uppercase;line-height:.92;text-shadow:3px 3px 0 var(--pink),-3px -3px 0 var(--cyan),0 0 25px rgba(255,43,214,.75);margin-bottom:4px}
+.subtitle{color:var(--muted);line-height:1.25;font-size:.78rem}
+.layout{flex:1;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr) 300px;gap:10px}
+.panel{border:3px solid rgba(34,247,255,.78);background:var(--panel);box-shadow:0 0 18px rgba(34,247,255,.25),7px 7px 0 rgba(255,43,214,.5);padding:10px;min-height:0;overflow:hidden}
+.panel:before{content:"";display:block;height:4px;background:linear-gradient(90deg,var(--pink),var(--cyan),var(--yellow),var(--green));margin:-10px -10px 8px}
+.panel h2{color:var(--yellow);text-transform:uppercase;text-shadow:2px 2px 0 var(--pink);margin-bottom:8px;font-size:1rem}
+label{color:var(--cyan);font-weight:bold;font-size:.75rem;text-transform:uppercase}
+select{width:100%;background:#070815;color:var(--text);border:2px solid var(--purple);padding:8px;font-family:inherit;font-weight:bold;outline:none;box-shadow:0 0 12px rgba(143,77,255,.35);font-size:.78rem;margin:6px 0 8px}
+.btn,.team-btn,.power-btn{font-family:inherit;font-weight:bold;text-transform:uppercase;cursor:pointer}
+.btn{border:2px solid var(--yellow);background:var(--pink);color:#050510;padding:8px;box-shadow:4px 4px 0 var(--cyan);transition:.18s;font-size:.72rem}
+.btn:hover,.power-btn:hover{background:var(--yellow);transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--pink)}
+.secondary{background:var(--cyan);box-shadow:4px 4px 0 var(--pink)}
+.green{background:var(--green);box-shadow:4px 4px 0 var(--pink)}
+.red{background:var(--red);color:#fff;box-shadow:4px 4px 0 var(--yellow)}
+.btn-grid,.team-buttons,.stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
+.info-box,.status-box{border:2px dashed var(--purple);padding:8px;color:var(--muted);line-height:1.35;margin-bottom:8px;background:rgba(143,77,255,.08);font-size:.73rem}
+.status-box{border-color:var(--green);color:var(--green);min-height:52px;font-weight:bold}
+.stat-card{border:2px solid var(--purple);background:rgba(143,77,255,.12);padding:8px;text-align:center;font-weight:bold;color:var(--yellow);font-size:.74rem}
+.stat-card span{display:block;color:var(--green);font-size:1.35rem;margin-top:3px;text-shadow:0 0 10px rgba(57,255,136,.7)}
+.team-btn{border:2px solid var(--muted);background:#070815;color:var(--text);padding:9px}
+.active-a{border-color:var(--cyan);background:var(--cyan);color:#050510;box-shadow:4px 4px 0 var(--pink)}
+.active-b{border-color:var(--pink);background:var(--pink);color:#050510;box-shadow:4px 4px 0 var(--cyan)}
+.game-panel{display:flex;flex-direction:column;gap:10px;justify-content:center}
+.timer-box{border:3px solid var(--yellow);background:rgba(255,230,109,.08);padding:10px;text-align:center;color:var(--yellow)}
+.timer{font-size:clamp(3rem,7vw,6.5rem);font-weight:bold;line-height:.9;text-shadow:4px 4px 0 var(--pink),-3px -3px 0 var(--cyan),0 0 24px rgba(255,230,109,.8)}
+.timer-label{margin-top:6px;color:var(--muted);font-weight:bold;text-transform:uppercase;font-size:.85rem}
+.word-card{flex:1;min-height:250px;border:4px solid var(--cyan);background:linear-gradient(135deg,rgba(34,247,255,.12),rgba(255,43,214,.08)),#080a18;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;box-shadow:0 0 24px rgba(34,247,255,.35),9px 9px 0 rgba(255,43,214,.55);position:relative;overflow:hidden}
+.word-card.hidden-word .word{filter:blur(14px);opacity:.3}
+.word-card.hidden-word:after{content:"WORD HIDDEN";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--yellow);font-size:clamp(1.6rem,4vw,4rem);font-weight:bold;text-shadow:3px 3px 0 var(--pink),0 0 18px rgba(255,230,109,.8);background:rgba(5,5,16,.72)}
+.category-line{position:absolute;top:12px;left:12px;color:#050510;background:var(--green);padding:6px 9px;font-weight:bold;text-transform:uppercase;box-shadow:4px 4px 0 var(--pink);font-size:.75rem}
+.word{font-size:clamp(2.5rem,6vw,7rem);color:var(--yellow);text-transform:uppercase;line-height:1;text-shadow:4px 4px 0 var(--pink),-3px -3px 0 var(--cyan),0 0 24px rgba(255,230,109,.75);word-break:break-word}
+.hint-line{margin-top:20px;color:var(--green);font-weight:bold;font-size:clamp(1rem,2vw,1.5rem);text-shadow:0 0 12px rgba(57,255,136,.75);min-height:30px}
+.action-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.power-grid{display:grid;gap:7px;margin-bottom:8px}
+.power-btn{border:2px solid var(--cyan);background:rgba(34,247,255,.08);color:var(--cyan);padding:8px;text-align:left;box-shadow:3px 3px 0 rgba(255,43,214,.45);font-size:.72rem;line-height:1.3}
+.power-btn.used{opacity:.45;cursor:not-allowed;text-decoration:line-through}
+.word-list{display:grid;gap:6px;max-height:calc(100vh - 410px);overflow-y:auto;padding-right:4px}
+.word-pill{border:2px solid rgba(34,247,255,.45);background:rgba(34,247,255,.07);color:var(--muted);padding:6px;font-size:.7rem;font-weight:bold;display:flex;justify-content:space-between;gap:8px;line-height:1.25}
+.word-pill.used{border-color:var(--green);color:var(--green);opacity:.75}
+#musicToggleBtn{position:fixed;right:14px;bottom:14px;z-index:9999;border:2px solid var(--cyan);background:#080812;color:var(--cyan);padding:9px 12px;font-family:"Courier New",monospace;font-weight:bold;text-transform:uppercase;cursor:pointer;box-shadow:4px 4px 0 var(--pink),0 0 16px rgba(34,247,255,.45);font-size:.75rem}
+#musicToggleBtn.music-on{background:var(--yellow);color:#050510;border-color:var(--pink);box-shadow:4px 4px 0 var(--cyan),0 0 18px rgba(255,230,109,.65)}
+@media(max-width:1050px){body{overflow-y:auto}.page{height:auto;min-height:100vh}.layout{grid-template-columns:1fr}.word-list{max-height:220px}}
+@media(max-width:720px){.topbar{flex-direction:column;align-items:stretch}.brand{text-align:left}.action-grid{grid-template-columns:1fr 1fr}.word-card{min-height:260px}.word{font-size:2.8rem}}
+@media(min-width:1051px) and (max-height:760px){.topbar,.badge,.subtitle,.info-box{display:none}header{padding:7px 12px;margin-bottom:6px}h1{font-size:clamp(1.5rem,2.8vw,2.5rem)}.word-card{min-height:205px}.timer{font-size:clamp(2.4rem,5vw,4.8rem)}.word{font-size:clamp(2rem,5vw,5.3rem)}.word-list{max-height:calc(100vh - 330px)}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <a class="back-link" href="../index.html">← Back to Quiz Hub</a>
+    <div class="brand">By Mr. Gilang Yudha Tama</div>
+  </div>
+
+  <header>
+    <div class="badge">Cyberpunk Speaking Guessing Mode</div>
+    <h1>Neon Hot Seat</h1>
+    <p class="subtitle">One student sits with their back to the screen. Teammates describe the word without saying it. Use power-ups, race the 30-second timer, and collect points.</p>
+  </header>
+
+  <section class="layout">
+    <aside class="panel">
+      <h2>Setup</h2>
+
+      <label for="modeSelect">Mode</label>
+      <select id="modeSelect" onchange="handleModeChange()">
+        <option value="levels">Level Mode</option>
+        <option value="special">Special Hot Seat Modes</option>
+      </select>
+
+      <div id="levelSelectBox">
+        <label for="levelSelect">Level</label>
+        <select id="levelSelect" onchange="handleLevelChange()">
+          <option value="1">Level 1 - Beginner</option>
+          <option value="2">Level 2 - Intermediate</option>
+          <option value="3">Level 3 - Advanced</option>
+        </select>
+      </div>
+
+      <div id="specialSelectBox" style="display:none;">
+        <label for="specialSelect">Special Mode</label>
+        <select id="specialSelect" onchange="handleSpecialChange()"></select>
+      </div>
+
+      <label for="categorySelect">Category</label>
+      <select id="categorySelect" onchange="handleCategoryChange()"></select>
+
+      <div class="team-buttons">
+        <button id="teamABtn" class="team-btn active-a" onclick="setTeam('A')">Team A</button>
+        <button id="teamBBtn" class="team-btn" onclick="setTeam('B')">Team B</button>
+      </div>
+
+      <div class="btn-grid">
+        <button class="btn secondary" onclick="startRound()">Start</button>
+        <button class="btn secondary" onclick="pauseRound()">Pause</button>
+        <button class="btn green" onclick="newWord()">New Word</button>
+        <button class="btn red" onclick="resetGame()">Reset</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">Team A<span id="scoreAText">0</span></div>
+        <div class="stat-card">Team B<span id="scoreBText">0</span></div>
+        <div class="stat-card">Round<span id="roundText">1</span></div>
+        <div class="stat-card">Words<span id="wordsText">0</span></div>
+      </div>
+
+      <div id="statusBox" class="status-box">Ready. Choose a category and start the timer.</div>
+      <div class="info-box">Timer is 30 seconds. Correct = +1 point. Double Points makes the next correct answer worth +2.</div>
+    </aside>
+
+    <main class="panel game-panel">
+      <div class="timer-box">
+        <div id="timerText" class="timer">30</div>
+        <div id="timerLabel" class="timer-label">Team A Turn • 30 Seconds</div>
+      </div>
+
+      <div id="wordCard" class="word-card">
+        <div id="categoryLine" class="category-line">Animals</div>
+        <div id="wordText" class="word">HOT SEAT</div>
+        <div id="hintLine" class="hint-line"></div>
+      </div>
+
+      <div class="action-grid">
+        <button class="btn green" onclick="markCorrect()">Correct</button>
+        <button class="btn" onclick="usePass()">Pass</button>
+        <button class="btn secondary" onclick="toggleHideWord()">Hide Word</button>
+        <button class="btn red" onclick="endRound()">End Round</button>
+      </div>
+    </main>
+
+    <aside class="panel">
+      <h2>Power-Ups</h2>
+
+      <div class="power-grid">
+        <button id="passBtn" class="power-btn" onclick="usePass()">Pass — skip one word</button>
+        <button id="stealBtn" class="power-btn" onclick="useSteal()">Steal — opponent can answer after time out</button>
+        <button id="doubleBtn" class="power-btn" onclick="useDoublePoints()">Double Points — next correct is worth 2x</button>
+        <button id="hintBtn" class="power-btn" onclick="useHint()">Hint — reveal the first letter</button>
+        <button id="freezeBtn" class="power-btn" onclick="useFreeze()">Freeze — opponent loses 5 seconds next turn</button>
+      </div>
+
+      <div class="info-box">Active effects:<br><strong id="effectsText">None</strong></div>
+
+      <h2>Word Bank</h2>
+      <div id="wordList" class="word-list"></div>
+    </aside>
+  </section>
+</div>
+
+<script>
+const SFX=(()=>{let a;function i(){const C=window.AudioContext||window.webkitAudioContext;if(!C)return;if(!a)a=new C;if(a.state==="suspended")a.resume()}function t(f,d=.08,type="square",v=.04,delay=0){i();if(!a)return;const n=a.currentTime,o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,n+delay);g.gain.setValueAtTime(.0001,n+delay);g.gain.exponentialRampToValueAtTime(v,n+delay+.01);g.gain.exponentialRampToValueAtTime(.0001,n+delay+d);o.connect(g);g.connect(a.destination);o.start(n+delay);o.stop(n+delay+d+.04)}function play(x){i();if(x==="click")t(520,.035,"square",.025);if(x==="start"){t(220,.07,"sawtooth",.045);t(440,.07,"sawtooth",.045,.08);t(880,.1,"sawtooth",.045,.16)}if(x==="correct"){t(523,.07,"square",.045);t(659,.08,"square",.045,.08);t(784,.12,"square",.045,.17)}if(x==="pass"){t(700,.04,"square",.035);t(500,.04,"square",.035,.05);t(900,.06,"square",.035,.1)}if(x==="power"){t(880,.06,"triangle",.04);t(1100,.06,"triangle",.04,.07);t(1320,.08,"triangle",.04,.14)}if(x==="time"){t(330,.12,"sawtooth",.04);t(247,.14,"sawtooth",.04,.13)}}return{init:i,play}})();
+
+const CYBER_MUSIC=(()=>{let a,master,delay,feedback,filter,timer=null,on=false,step=0,next=0;const tempo=112,stepTime=60/tempo/4,bass=[36,36,43,36,34,34,41,34,39,39,46,39,31,31,38,31],arp=[60,67,72,79,58,65,70,77,63,70,75,82,55,62,67,74];const mf=m=>440*Math.pow(2,(m-69)/12);function init(){const C=window.AudioContext||window.webkitAudioContext;if(!C)return;if(!a){a=new C;master=a.createGain();master.gain.value=.14;filter=a.createBiquadFilter();filter.type="lowpass";filter.frequency.value=1700;filter.Q.value=6;delay=a.createDelay();delay.delayTime.value=.24;feedback=a.createGain();feedback.gain.value=.24;delay.connect(feedback);feedback.connect(delay);filter.connect(delay);filter.connect(master);delay.connect(master);master.connect(a.destination)}if(a.state==="suspended")a.resume()}function tone(f,time,d,type,v,dest=filter){const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,time);g.gain.setValueAtTime(.0001,time);g.gain.exponentialRampToValueAtTime(v,time+.01);g.gain.exponentialRampToValueAtTime(.0001,time+d);o.connect(g);g.connect(dest);o.start(time);o.stop(time+d+.05)}function noise(time,d,v){const size=a.sampleRate*d,b=a.createBuffer(1,size,a.sampleRate),data=b.getChannelData(0);for(let i=0;i<size;i++)data[i]=Math.random()*2-1;const n=a.createBufferSource(),g=a.createGain(),hp=a.createBiquadFilter();hp.type="highpass";hp.frequency.value=6500;g.gain.setValueAtTime(v,time);g.gain.exponentialRampToValueAtTime(.0001,time+d);n.buffer=b;n.connect(hp);hp.connect(g);g.connect(master);n.start(time);n.stop(time+d)}function kick(time){const o=a.createOscillator(),g=a.createGain();o.type="sine";o.frequency.setValueAtTime(95,time);o.frequency.exponentialRampToValueAtTime(38,time+.12);g.gain.setValueAtTime(.12,time);g.gain.exponentialRampToValueAtTime(.0001,time+.14);o.connect(g);g.connect(master);o.start(time);o.stop(time+.16)}function tick(time){if(step%4===0)kick(time);if(step%8===4){noise(time,.08,.032);tone(190,time,.06,"triangle",.032,master)}if(step%2===0)tone(mf(bass[step%bass.length]),time,stepTime*1.8,"sawtooth",.05);tone(mf(arp[step%arp.length]),time,stepTime*.75,"square",.022);if(step%2===1)noise(time,.025,.016);step++}function sched(){while(next<a.currentTime+.25){tick(next);next+=stepTime}}function start(){init();if(!a||on)return;on=true;step=0;next=a.currentTime+.05;timer=setInterval(sched,60);btn()}function stop(){if(!on)return;on=false;clearInterval(timer);timer=null;btn()}function toggle(){on?stop():start()}function btn(){const b=document.getElementById("musicToggleBtn");if(b){b.textContent=on?"Music: ON":"Music: OFF";b.classList.toggle("music-on",on)}}return{init,start,stop,toggle}})();
+
+const wordBanks={levels:{1:{"Animals":["Tiger","Rabbit","Elephant","Giraffe","Dolphin","Penguin","Monkey","Zebra","Turtle","Kangaroo"],"Food":["Pizza","Burger","Noodles","Chicken","Sandwich","Cheese","Soup","Salad","Bread","Rice"],"Fruits":["Banana","Apple","Mango","Papaya","Orange","Watermelon","Grape","Avocado","Pineapple","Strawberry"],"Colors":["Yellow","Purple","Orange","Green","Black","White","Blue","Red","Brown","Pink"],"Jobs":["Teacher","Doctor","Chef","Driver","Pilot","Nurse","Farmer","Police Officer","Artist","Engineer"],"Sports":["Soccer","Badminton","Basketball","Swimming","Tennis","Boxing","Running","Cycling","Volleyball","Baseball"],"School Things":["Pencil","Eraser","Notebook","Backpack","Ruler","Homework","Whiteboard","Marker","Dictionary","Calculator"],"Family Members":["Mother","Father","Sister","Brother","Cousin","Grandfather","Grandmother","Uncle","Aunt","Daughter"],"Body Parts":["Head","Shoulder","Knee","Finger","Elbow","Stomach","Teeth","Tongue","Ankle","Wrist"],"Transportation":["Car","Bus","Train","Airplane","Bicycle","Motorcycle","Boat","Taxi","Helicopter","Truck"]},2:{"Countries":["Indonesia","Japan","France","Brazil","Australia","Canada","Germany","Egypt","Thailand","Argentina"],"Famous Landmarks":["Eiffel Tower","Pyramids","Colosseum","Taj Mahal","Great Wall","Stonehenge","Machu Picchu","Big Ben","Statue of Liberty","Borobudur"],"Technology":["Algorithm","Database","Software","Hardware","Encryption","Robot","Smartphone","Application","Keyboard","Internet"],"Space":["Galaxy","Asteroid","Nebula","Satellite","Telescope","Constellation","Planet","Comet","Astronaut","Black Hole"],"Weather":["Thunderstorm","Rainy","Sunny","Cloudy","Windy","Humidity","Temperature","Forecast","Snowstorm","Lightning"],"Hobbies":["Reading","Drawing","Gaming","Cooking","Gardening","Photography","Fishing","Painting","Hiking","Collecting"],"Movies":["Director","Actor","Scene","Plot","Villain","Hero","Animation","Subtitle","Soundtrack","Sequel"],"Music":["Singer","Guitar","Piano","Concert","Lyrics","Melody","Album","Drummer","Orchestra","Microphone"],"Household Items":["Refrigerator","Washing Machine","Sofa","Microwave","Curtain","Broom","Pillow","Blanket","Wardrobe","Television"],"Health & Fitness":["Exercise","Nutrition","Hydration","Workout","Meditation","Protein","Cardio","Stretching","Sleep","Balance"]},3:{"Famous People":["Albert Einstein","Nelson Mandela","Shakespeare","Beethoven","Isaac Newton","Picasso","Marie Curie","Leonardo da Vinci","Muhammad Ali","Steve Jobs"],"Historical Figures":["Julius Caesar","Cleopatra","Napoleon","Mahatma Gandhi","Abraham Lincoln","Winston Churchill","Sukarno","Queen Victoria","Genghis Khan","Martin Luther King"],"Inventions":["Telephone","Electricity","Vaccine","Microscope","Printing Press","Penicillin","Airplane","Steam Engine","Internet","Light Bulb"],"Academic Vocabulary":["Analyze","Evaluate","Interpret","Significant","Evidence","Hypothesis","Concept","Methodology","Variable","Conclusion"],"Business & Economics":["Inflation","Investment","Profit","Revenue","Market","Budget","Entrepreneur","Bankruptcy","Currency","Demand"],"Science":["Photosynthesis","Evaporation","Gravity","Ecosystem","Evolution","Atom","Molecule","Friction","Magnetism","Experiment"],"Environment":["Deforestation","Pollution","Recycling","Conservation","Climate Change","Renewable Energy","Biodiversity","Erosion","Sustainability","Carbon Footprint"],"Psychology":["Memory","Motivation","Emotion","Behavior","Personality","Cognition","Stress","Anxiety","Perception","Learning"],"Politics":["Democracy","Election","Parliament","Constitution","Diplomacy","Campaign","Policy","Government","Senator","President"],"Literature":["Metaphor","Narrator","Character","Plot","Theme","Genre","Poetry","Novel","Symbolism","Conflict"]}},special:{"Celebrity Edition":["Taylor Swift","Michael Jackson","MrBeast","Tom Cruise","Cristiano Ronaldo","Beyonce","Lionel Messi","Stephen Curry","Dwayne Johnson","Keanu Reeves"],"Movie Edition":["Titanic","Avatar","Frozen","The Lion King","Avengers Endgame","Spider Man","Harry Potter","Jurassic Park","Toy Story","Black Panther"],"Travel Edition":["Airports","Hotels","Countries","Tourist Attractions","Transportation","Passport","Suitcase","Boarding Pass","Tour Guide","Souvenir"],"ESL Edition":["Phrasal Verbs","Idioms","Adjectives","Verbs","Occupations","Synonyms","Antonyms","Pronunciation","Grammar","Vocabulary"]}};
+
+const $=id=>document.getElementById(id);
+const modeSelect=$("modeSelect"),levelSelect=$("levelSelect"),specialSelect=$("specialSelect"),categorySelect=$("categorySelect"),levelSelectBox=$("levelSelectBox"),specialSelectBox=$("specialSelectBox");
+const teamABtn=$("teamABtn"),teamBBtn=$("teamBBtn"),scoreAText=$("scoreAText"),scoreBText=$("scoreBText"),roundText=$("roundText"),wordsText=$("wordsText"),statusBox=$("statusBox"),timerText=$("timerText"),timerLabel=$("timerLabel"),wordCard=$("wordCard"),categoryLine=$("categoryLine"),wordText=$("wordText"),hintLine=$("hintLine"),effectsText=$("effectsText"),wordList=$("wordList");
+const passBtn=$("passBtn"),stealBtn=$("stealBtn"),doubleBtn=$("doubleBtn"),hintBtn=$("hintBtn"),freezeBtn=$("freezeBtn");
+let currentMode="levels",currentLevel="1",currentSpecial="Celebrity Edition",currentCategory="Animals",currentTeam="A",scoreA=0,scoreB=0,round=1,wordsCompleted=0,currentWord="HOT SEAT",usedWords={},timeLeft=30,timer=null,roundActive=false,wordHidden=false,stealWindowActive=false,doubleActive=false,stealActive=false,freezePenalty={A:0,B:0},usedPowerUps={pass:false,steal:false,double:false,hint:false,freeze:false};
+
+function bank(){return currentMode==="levels"?wordBanks.levels[currentLevel][currentCategory]:wordBanks.special[currentSpecial]}
+function key(w){return `${currentMode}-${currentLevel}-${currentSpecial}-${currentCategory}-${w}`}
+function populateSpecialModes(){specialSelect.innerHTML="";Object.keys(wordBanks.special).forEach(m=>specialSelect.add(new Option(m,m)));specialSelect.value=currentSpecial}
+function populateCategories(){categorySelect.innerHTML="";if(currentMode==="levels"){const cats=Object.keys(wordBanks.levels[currentLevel]);cats.forEach(c=>categorySelect.add(new Option(c,c)));if(!cats.includes(currentCategory))currentCategory=cats[0];categorySelect.value=currentCategory}else{currentSpecial=specialSelect.value;categorySelect.add(new Option(currentSpecial,currentSpecial));currentCategory=currentSpecial;categorySelect.value=currentSpecial}renderWordList();updateDisplay()}
+function handleModeChange(){currentMode=modeSelect.value;if(currentMode==="levels"){levelSelectBox.style.display="block";specialSelectBox.style.display="none";currentCategory=Object.keys(wordBanks.levels[currentLevel])[0]}else{levelSelectBox.style.display="none";specialSelectBox.style.display="block";currentSpecial=specialSelect.value;currentCategory=currentSpecial}populateCategories();resetRoundStateOnly();newWord()}
+function handleLevelChange(){currentLevel=levelSelect.value;currentCategory=Object.keys(wordBanks.levels[currentLevel])[0];populateCategories();resetRoundStateOnly();newWord()}
+function handleSpecialChange(){currentSpecial=specialSelect.value;currentCategory=currentSpecial;populateCategories();resetRoundStateOnly();newWord()}
+function handleCategoryChange(){currentCategory=categorySelect.value;resetRoundStateOnly();newWord()}
+function setTeam(t){currentTeam=t;teamABtn.className="team-btn";teamBBtn.className="team-btn";(t==="A"?teamABtn:teamBBtn).classList.add(t==="A"?"active-a":"active-b");updateDisplay()}
+function switchTeam(){setTeam(currentTeam==="A"?"B":"A")}
+function resetPowerUps(){usedPowerUps={pass:false,steal:false,double:false,hint:false,freeze:false};doubleActive=false;stealActive=false;stealWindowActive=false;[passBtn,stealBtn,doubleBtn,hintBtn,freezeBtn].forEach(b=>b.classList.remove("used"));updateEffects()}
+function resetRoundStateOnly(){clearInterval(timer);roundActive=false;timeLeft=30;hintLine.textContent="";wordHidden=false;wordCard.classList.remove("hidden-word");resetPowerUps();updateDisplay()}
+function available(){const b=bank(),a=b.filter(w=>!usedWords[key(w)]);return a.length?a:b}
+function chooseWord(){const a=available();return a[Math.floor(Math.random()*a.length)]}
+function newWord(){currentWord=chooseWord();hintLine.textContent="";wordHidden=false;wordCard.classList.remove("hidden-word");updateDisplay();renderWordList();SFX.play("pass")}
+function startRound(){CYBER_MUSIC.start();SFX.play("start");clearInterval(timer);timeLeft=Math.max(5,30-freezePenalty[currentTeam]);freezePenalty[currentTeam]=0;roundActive=true;stealWindowActive=false;statusBox.textContent=`Round started. Team ${currentTeam}, describe the word.`;updateDisplay();timer=setInterval(()=>{timeLeft--;updateDisplay();if(timeLeft<=5&&timeLeft>0)SFX.play("click");if(timeLeft<=0)endRoundByTime()},1000)}
+function pauseRound(){if(!roundActive)return;roundActive=false;clearInterval(timer);statusBox.textContent="Paused. Timer frozen.";updateDisplay()}
+function endRound(){roundActive=false;stealWindowActive=false;clearInterval(timer);statusBox.textContent="Round ended manually. Switching team.";SFX.play("time");switchTeamAfterRound()}
+function endRoundByTime(){roundActive=false;clearInterval(timer);timeLeft=0;SFX.play("time");if(stealActive){const st=currentTeam==="A"?"B":"A";stealActive=false;stealWindowActive=true;setTeam(st);statusBox.textContent=`Time out. STEAL activated. Team ${st} may answer now. Click Correct if they get it.`;updateEffects();updateDisplay();return}statusBox.textContent="Time out. Switching team.";switchTeamAfterRound();updateDisplay()}
+function switchTeamAfterRound(){round++;resetPowerUps();switchTeam();updateDisplay()}
+function markCorrect(){if(!currentWord)return;const pts=doubleActive?2:1;if(currentTeam==="A")scoreA+=pts;else scoreB+=pts;usedWords[key(currentWord)]=true;wordsCompleted++;SFX.play("correct");statusBox.textContent=`Correct. Team ${currentTeam} gets +${pts} point${pts>1?"s":""}.`;doubleActive=false;stealActive=false;hintLine.textContent="";if(stealWindowActive){stealWindowActive=false;round++}updateEffects();newWord();updateDisplay()}
+function usePass(){if(usedPowerUps.pass)return;usedPowerUps.pass=true;passBtn.classList.add("used");SFX.play("pass");statusBox.textContent="Pass used. Skipping one word.";newWord()}
+function useSteal(){if(usedPowerUps.steal)return;usedPowerUps.steal=true;stealActive=true;stealBtn.classList.add("used");SFX.play("power");statusBox.textContent="Steal activated. Opponent can answer if time runs out.";updateEffects()}
+function useDoublePoints(){if(usedPowerUps.double)return;usedPowerUps.double=true;doubleActive=true;doubleBtn.classList.add("used");SFX.play("power");statusBox.textContent="Double Points activated. Next correct answer is worth 2 points.";updateEffects()}
+function useHint(){if(usedPowerUps.hint)return;usedPowerUps.hint=true;hintBtn.classList.add("used");hintLine.textContent=`First letter: ${currentWord[0].toUpperCase()}`;SFX.play("power");statusBox.textContent="Hint used. First letter revealed.";updateEffects()}
+function useFreeze(){if(usedPowerUps.freeze)return;usedPowerUps.freeze=true;freezeBtn.classList.add("used");const op=currentTeam==="A"?"B":"A";freezePenalty[op]=5;SFX.play("power");statusBox.textContent=`Freeze activated. Team ${op} loses 5 seconds next round.`;updateEffects()}
+function toggleHideWord(){wordHidden=!wordHidden;wordCard.classList.toggle("hidden-word",wordHidden);SFX.play("click")}
+function resetGame(){clearInterval(timer);scoreA=0;scoreB=0;round=1;wordsCompleted=0;timeLeft=30;roundActive=false;stealWindowActive=false;usedWords={};freezePenalty={A:0,B:0};resetPowerUps();setTeam("A");newWord();statusBox.textContent="Game reset. Fresh hot seat battle loaded.";SFX.play("start");updateDisplay()}
+function updateEffects(){const e=[];if(doubleActive)e.push("Double Points");if(stealActive)e.push("Steal");if(stealWindowActive)e.push("Steal Window");if(freezePenalty.A>0)e.push("Team A -5s");if(freezePenalty.B>0)e.push("Team B -5s");effectsText.textContent=e.length?e.join(" • "):"None"}
+function updateDisplay(){scoreAText.textContent=scoreA;scoreBText.textContent=scoreB;roundText.textContent=round;wordsText.textContent=wordsCompleted;timerText.textContent=timeLeft;timerLabel.textContent=`Team ${currentTeam} Turn • ${timeLeft} Seconds`;categoryLine.textContent=currentMode==="levels"?`Level ${currentLevel} • ${currentCategory}`:currentSpecial;wordText.textContent=currentWord;updateEffects()}
+function renderWordList(){wordList.innerHTML="";bank().forEach(w=>{const d=document.createElement("div"),u=!!usedWords[key(w)];d.className=u?"word-pill used":"word-pill";d.innerHTML=`<span>${u?w:"••••••••"}</span><span>${u?"DONE":w.length+" letters"}</span>`;wordList.appendChild(d)})}
+
+document.addEventListener("pointerdown",()=>{SFX.init();CYBER_MUSIC.init()},{once:true});
+document.addEventListener("click",e=>{if(!(e.target instanceof Element))return;if(e.target.closest("button,.back-link"))SFX.play("click")});
+document.addEventListener("keydown",e=>{const k=e.key.toLowerCase();if(k===" "){e.preventDefault();markCorrect()}if(k==="p")usePass();if(k==="h")useHint();if(k==="s")startRound()});
+const musicButton=document.createElement("button");musicButton.id="musicToggleBtn";musicButton.textContent="Music: OFF";musicButton.onclick=()=>CYBER_MUSIC.toggle();document.body.appendChild(musicButton);
+populateSpecialModes();populateCategories();newWord();updateDisplay();
+</script>
+</body>
+</html>
