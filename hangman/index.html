@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Cyber Hangman Quiz</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #050510;
+      --panel: rgba(13, 16, 35, 0.94);
+      --cyan: #22f7ff;
+      --pink: #ff2bd6;
+      --yellow: #ffe66d;
+      --green: #39ff88;
+      --red: #ff4d6d;
+      --purple: #8f4dff;
+      --text: #f4f7ff;
+      --muted: #aab2dd;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Courier New", monospace;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 43, 214, 0.24), transparent 34%),
+        radial-gradient(circle at top right, rgba(34, 247, 255, 0.22), transparent 34%),
+        linear-gradient(180deg, #050510, #11142b 55%, #04040a);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(34, 247, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 43, 214, 0.05) 1px, transparent 1px);
+      background-size: 34px 34px;
+      pointer-events: none;
+      z-index: -2;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.035) 0px,
+        rgba(255, 255, 255, 0.035) 1px,
+        transparent 2px,
+        transparent 6px
+      );
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .page {
+      width: min(1380px, 97%);
+      height: 100vh;
+      margin: 0 auto;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 6px;
+      flex: 0 0 auto;
+    }
+
+    .back-link {
+      color: #050510;
+      background: var(--yellow);
+      border: 2px solid var(--cyan);
+      text-decoration: none;
+      padding: 7px 11px;
+      font-weight: bold;
+      box-shadow: 4px 4px 0 var(--pink);
+      text-transform: uppercase;
+      font-size: 0.78rem;
+    }
+
+    .brand {
+      color: var(--green);
+      font-weight: bold;
+      text-shadow: 0 0 12px var(--green);
+      text-align: right;
+      font-size: 0.82rem;
+    }
+
+    header {
+      border: 3px solid var(--cyan);
+      background: rgba(5, 7, 18, 0.82);
+      padding: 9px 14px;
+      margin-bottom: 8px;
+      box-shadow:
+        0 0 18px rgba(34, 247, 255, 0.5),
+        inset 0 0 24px rgba(255, 43, 214, 0.16);
+      flex: 0 0 auto;
+    }
+
+    .badge {
+      display: inline-block;
+      color: #050510;
+      background: var(--green);
+      padding: 4px 7px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      box-shadow: 4px 4px 0 var(--pink);
+      text-transform: uppercase;
+      font-size: 0.68rem;
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 3vw, 2.7rem);
+      text-transform: uppercase;
+      line-height: 0.92;
+      text-shadow:
+        3px 3px 0 var(--pink),
+        -3px -3px 0 var(--cyan),
+        0 0 25px rgba(255, 43, 214, 0.75);
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 1080px;
+      line-height: 1.25;
+      font-size: 0.78rem;
+    }
+
+    .layout {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 310px minmax(0, 1fr) 310px;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .panel {
+      border: 3px solid rgba(34, 247, 255, 0.78);
+      background: var(--panel);
+      box-shadow:
+        0 0 18px rgba(34, 247, 255, 0.25),
+        7px 7px 0 rgba(255, 43, 214, 0.5);
+      padding: 10px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      display: block;
+      height: 4px;
+      background: linear-gradient(90deg, var(--pink), var(--cyan), var(--yellow), var(--green));
+      margin: -10px -10px 8px;
+    }
+
+    .panel h2 {
+      color: var(--yellow);
+      text-transform: uppercase;
+      text-shadow: 2px 2px 0 var(--pink);
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .select-group {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 9px;
+    }
+
+    label {
+      color: var(--cyan);
+      font-weight: bold;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    select {
+      width: 100%;
+      background: #070815;
+      color: var(--text);
+      border: 2px solid var(--purple);
+      padding: 8px;
+      font-family: inherit;
+      font-weight: bold;
+      outline: none;
+      box-shadow: 0 0 12px rgba(143, 77, 255, 0.35);
+      font-size: 0.8rem;
+    }
+
+    .btn {
+      border: 2px solid var(--yellow);
+      background: var(--pink);
+      color: #050510;
+      padding: 8px;
+      font-family: inherit;
+      font-weight: bold;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 var(--cyan);
+      transition: 0.18s;
+      font-size: 0.75rem;
+    }
+
+    .btn:hover {
+      background: var(--yellow);
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--pink);
+    }
+
+    .btn.secondary {
+      background: var(--cyan);
+      box-shadow: 4px 4px 0 var(--pink);
+    }
+
+    .btn.green {
+      background: var(--green);
+      box-shadow: 4px 4px 0 var(--pink);
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-bottom: 9px;
+    }
+
+    .info-box,
+    .status-box,
+    .hint-box {
+      border: 2px dashed var(--purple);
+      padding: 8px;
+      color: var(--muted);
+      line-height: 1.35;
+      margin-bottom: 9px;
+      background: rgba(143, 77, 255, 0.08);
+      font-size: 0.76rem;
+    }
+
+    .status-box {
+      border-color: var(--green);
+      color: var(--green);
+      min-height: 54px;
+      font-weight: bold;
+    }
+
+    .hint-box strong {
+      color: var(--yellow);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-bottom: 9px;
+    }
+
+    .stat-card {
+      border: 2px solid var(--purple);
+      background: rgba(143, 77, 255, 0.12);
+      padding: 8px;
+      text-align: center;
+      font-weight: bold;
+      color: var(--yellow);
+      font-size: 0.78rem;
+    }
+
+    .stat-card span {
+      display: block;
+      color: var(--green);
+      font-size: 1.35rem;
+      margin-top: 3px;
+      text-shadow: 0 0 10px rgba(57, 255, 136, 0.7);
+    }
+
+    .game-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .canvas-wrap {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 3px solid var(--yellow);
+      background: #02030a;
+      padding: 8px;
+      box-shadow: inset 0 0 22px rgba(255, 230, 109, 0.12);
+    }
+
+    canvas {
+      display: block;
+      width: auto;
+      height: min(100%, calc(100vh - 250px));
+      max-width: 100%;
+      max-height: 100%;
+      aspect-ratio: 4 / 3;
+      image-rendering: pixelated;
+      background: #02030a;
+    }
+
+    .word-box {
+      border: 3px solid var(--cyan);
+      background: rgba(34, 247, 255, 0.08);
+      padding: 11px;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(34, 247, 255, 0.25);
+      flex: 0 0 auto;
+    }
+
+    #wordDisplay {
+      color: var(--yellow);
+      text-shadow:
+        2px 2px 0 var(--pink),
+        0 0 18px rgba(255, 230, 109, 0.7);
+      font-size: clamp(1.35rem, 3vw, 2.5rem);
+      letter-spacing: 7px;
+      word-break: break-word;
+      line-height: 1.3;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    .category-line {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .keyboard {
+      display: grid;
+      grid-template-columns: repeat(13, 1fr);
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+
+    .letter-btn {
+      min-height: 38px;
+      border: 2px solid var(--cyan);
+      background: #070815;
+      color: var(--cyan);
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 3px 3px 0 rgba(255, 43, 214, 0.5);
+      transition: 0.16s;
+    }
+
+    .letter-btn:hover:not(:disabled) {
+      background: rgba(34, 247, 255, 0.15);
+      transform: translate(-1px, -1px);
+    }
+
+    .letter-btn.correct {
+      background: rgba(57, 255, 136, 0.18);
+      border-color: var(--green);
+      color: var(--green);
+      box-shadow: 0 0 14px rgba(57, 255, 136, 0.45);
+    }
+
+    .letter-btn.wrong {
+      background: rgba(255, 77, 109, 0.18);
+      border-color: var(--red);
+      color: var(--red);
+      box-shadow: 0 0 14px rgba(255, 77, 109, 0.45);
+    }
+
+    .letter-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .wrong-list {
+      border: 2px solid var(--red);
+      background: rgba(255, 77, 109, 0.08);
+      color: var(--red);
+      padding: 8px;
+      margin-bottom: 9px;
+      min-height: 44px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      line-height: 1.4;
+    }
+
+    .word-list {
+      display: grid;
+      gap: 6px;
+      max-height: calc(100vh - 420px);
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .word-pill {
+      border: 2px solid rgba(34, 247, 255, 0.45);
+      background: rgba(34, 247, 255, 0.07);
+      color: var(--muted);
+      padding: 6px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .word-pill.used {
+      border-color: var(--green);
+      color: var(--green);
+      opacity: 0.75;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.78);
+      z-index: 20;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(760px, 96%);
+      border: 3px solid var(--cyan);
+      background: #080a18;
+      padding: 20px;
+      box-shadow:
+        0 0 24px rgba(34, 247, 255, 0.55),
+        10px 10px 0 rgba(255, 43, 214, 0.7);
+      text-align: center;
+    }
+
+    .modal-card::before {
+      content: "";
+      display: block;
+      height: 7px;
+      background: linear-gradient(90deg, var(--pink), var(--cyan), var(--yellow), var(--green));
+      margin: -20px -20px 16px;
+    }
+
+    .modal-card h2 {
+      color: var(--yellow);
+      font-size: clamp(1.5rem, 4vw, 3rem);
+      text-transform: uppercase;
+      text-shadow: 3px 3px 0 var(--pink);
+      margin-bottom: 12px;
+    }
+
+    .modal-card p {
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .revealed-word {
+      color: var(--green);
+      font-size: clamp(1.4rem, 3vw, 2.4rem);
+      font-weight: bold;
+      text-transform: uppercase;
+      text-shadow: 0 0 16px rgba(57, 255, 136, 0.8);
+      margin-bottom: 16px;
+    }
+
+    #musicToggleBtn {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 9999;
+      border: 2px solid var(--cyan);
+      background: #080812;
+      color: var(--cyan);
+      padding: 9px 12px;
+      font-family: "Courier New", monospace;
+      font-weight: bold;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 var(--pink), 0 0 16px rgba(34, 247, 255, 0.45);
+      font-size: 0.75rem;
+    }
+
+    #musicToggleBtn.music-on {
+      background: var(--yellow);
+      color: #050510;
+      border-color: var(--pink);
+      box-shadow: 4px 4px 0 var(--cyan), 0 0 18px rgba(255, 230, 109, 0.65);
+    }
+
+    @media (max-width: 1050px) {
+      body {
+        overflow-y: auto;
+      }
+
+      .page {
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      canvas {
+        width: min(100%, 640px);
+        height: auto;
+      }
+
+      .word-list {
+        max-height: 220px;
+      }
+
+      .keyboard {
+        grid-template-columns: repeat(7, 1fr);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .brand {
+        text-align: left;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .keyboard {
+        grid-template-columns: repeat(6, 1fr);
+      }
+
+      .letter-btn {
+        min-height: 42px;
+      }
+
+      #wordDisplay {
+        letter-spacing: 4px;
+      }
+    }
+
+    @media (min-width: 1051px) and (max-height: 760px) {
+      .topbar {
+        display: none;
+      }
+
+      .badge {
+        display: none;
+      }
+
+      header {
+        padding: 7px 12px;
+        margin-bottom: 6px;
+      }
+
+      .subtitle {
+        display: none;
+      }
+
+      canvas {
+        height: min(100%, calc(100vh - 205px));
+      }
+
+      .info-box {
+        display: none;
+      }
+
+      .word-list {
+        max-height: calc(100vh - 350px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a class="back-link" href="../index.html">← Back to Quiz Hub</a>
+      <div class="brand">By Mr. Gilang Yudha Tama</div>
+    </div>
+
+    <header>
+      <div class="badge">Cyberpunk Word Guessing Mode</div>
+      <h1>Neon Hangman</h1>
+      <p class="subtitle">
+        Choose a level and category, guess the hidden word, and save the neon stickman.
+        Built with retro cyberpunk backsound and arcade sound effects.
+      </p>
+    </header>
+
+    <section class="layout">
+      <aside class="panel">
+        <h2>Setup</h2>
+
+        <div class="select-group">
+          <label for="levelSelect">Level</label>
+          <select id="levelSelect" onchange="handleLevelChange()">
+            <option value="1">Level 1 - Beginner</option>
+            <option value="2">Level 2 - Intermediate</option>
+          </select>
+        </div>
+
+        <div class="select-group">
+          <label for="categorySelect">Category</label>
+          <select id="categorySelect" onchange="handleCategoryChange()"></select>
+        </div>
+
+        <div class="btn-grid">
+          <button class="btn secondary" onclick="startGame()">Start</button>
+          <button class="btn green" onclick="newWord()">New Word</button>
+          <button class="btn" onclick="showHint()">Hint</button>
+          <button class="btn" onclick="revealAnswer()">Reveal</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card">Score<span id="scoreText">0</span></div>
+          <div class="stat-card">Wins<span id="winsText">0</span></div>
+          <div class="stat-card">Lives<span id="livesText">6</span></div>
+          <div class="stat-card">Streak<span id="streakText">0</span></div>
+        </div>
+
+        <div class="hint-box">
+          <strong>Hint:</strong>
+          <span id="hintText">Click Start to begin.</span>
+        </div>
+
+        <div id="statusBox" class="status-box">
+          Ready. Pick a level and start the neon word battle.
+        </div>
+
+        <div class="info-box">
+          Use the on-screen keyboard or your physical keyboard.
+          Correct letters add points. Wrong letters reduce lives.
+        </div>
+      </aside>
+
+      <main class="panel game-panel">
+        <div class="canvas-wrap">
+          <canvas id="hangmanCanvas" width="640" height="480"></canvas>
+        </div>
+
+        <div class="word-box">
+          <div id="wordDisplay">CLICK START</div>
+          <div class="category-line">
+            <span id="currentLevelText">Level 1</span> •
+            <span id="currentCategoryText">Animals</span>
+          </div>
+        </div>
+
+        <div id="keyboard" class="keyboard"></div>
+      </main>
+
+      <aside class="panel">
+        <h2>Progress</h2>
+
+        <div class="wrong-list">
+          Wrong letters:
+          <span id="wrongLettersText">None</span>
+        </div>
+
+        <div class="info-box">
+          Word bank preview. Completed words turn green.
+        </div>
+
+        <div id="wordList" class="word-list"></div>
+      </aside>
+    </section>
+  </div>
+
+  <div id="resultModal" class="modal">
+    <div class="modal-card">
+      <h2 id="resultTitle">Result</h2>
+      <p id="resultMessage">Message appears here.</p>
+      <div id="resultWord" class="revealed-word">WORD</div>
+      <button class="btn secondary" onclick="closeResultAndContinue()">Next Word</button>
+    </div>
+  </div>
+
+  <script>
+    const SFX = (() => {
+      let audioCtx;
+
+      function init() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        if (!audioCtx) {
+          audioCtx = new AudioContextClass();
+        }
+
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+      }
+
+      function tone(freq, duration = 0.08, type = "square", volume = 0.04, delay = 0) {
+        init();
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now + delay);
+
+        gain.gain.setValueAtTime(0.0001, now + delay);
+        gain.gain.exponentialRampToValueAtTime(volume, now + delay + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now + delay);
+        osc.stop(now + delay + duration + 0.04);
+      }
+
+      function play(name) {
+        init();
+
+        switch (name) {
+          case "click":
+            tone(520, 0.035, "square", 0.025);
+            break;
+          case "start":
+            tone(220, 0.07, "sawtooth", 0.045);
+            tone(440, 0.07, "sawtooth", 0.045, 0.08);
+            tone(880, 0.1, "sawtooth", 0.045, 0.16);
+            break;
+          case "correct":
+            tone(660, 0.05, "square", 0.045);
+            tone(880, 0.07, "square", 0.045, 0.06);
+            break;
+          case "wrong":
+            tone(220, 0.1, "sawtooth", 0.045);
+            tone(155, 0.14, "sawtooth", 0.045, 0.1);
+            break;
+          case "win":
+            tone(523, 0.08, "square", 0.045);
+            tone(659, 0.08, "square", 0.045, 0.09);
+            tone(784, 0.08, "square", 0.045, 0.18);
+            tone(1046, 0.18, "square", 0.045, 0.28);
+            break;
+          case "lose":
+            tone(330, 0.12, "sawtooth", 0.04);
+            tone(247, 0.14, "sawtooth", 0.04, 0.13);
+            tone(165, 0.22, "sawtooth", 0.04, 0.28);
+            break;
+          case "hint":
+            tone(600, 0.05, "triangle", 0.035);
+            tone(900, 0.08, "triangle", 0.035, 0.06);
+            break;
+        }
+      }
+
+      return { init, play };
+    })();
+
+    const CYBER_MUSIC = (() => {
+      let audioCtx;
+      let masterGain;
+      let delayNode;
+      let feedbackGain;
+      let filterNode;
+      let timer = null;
+      let isPlaying = false;
+      let step = 0;
+      let nextNoteTime = 0;
+
+      const tempo = 108;
+      const stepTime = 60 / tempo / 4;
+      const bassLine = [33, 33, 40, 33, 31, 31, 38, 31, 36, 36, 43, 36, 28, 28, 35, 28];
+      const arpLine = [57, 64, 69, 76, 55, 62, 67, 74, 60, 67, 72, 79, 52, 59, 64, 71];
+
+      function midiToFreq(midi) {
+        return 440 * Math.pow(2, (midi - 69) / 12);
+      }
+
+      function init() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+
+        if (!audioCtx) {
+          audioCtx = new AudioContextClass();
+
+          masterGain = audioCtx.createGain();
+          masterGain.gain.value = 0.15;
+
+          filterNode = audioCtx.createBiquadFilter();
+          filterNode.type = "lowpass";
+          filterNode.frequency.value = 1700;
+          filterNode.Q.value = 6;
+
+          delayNode = audioCtx.createDelay();
+          delayNode.delayTime.value = 0.24;
+
+          feedbackGain = audioCtx.createGain();
+          feedbackGain.gain.value = 0.24;
+
+          delayNode.connect(feedbackGain);
+          feedbackGain.connect(delayNode);
+
+          filterNode.connect(delayNode);
+          filterNode.connect(masterGain);
+          delayNode.connect(masterGain);
+          masterGain.connect(audioCtx.destination);
+        }
+
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+      }
+
+      function playTone(freq, time, duration, type, volume, destination = filterNode) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, time);
+
+        gain.gain.setValueAtTime(0.0001, time);
+        gain.gain.exponentialRampToValueAtTime(volume, time + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+        osc.connect(gain);
+        gain.connect(destination);
+
+        osc.start(time);
+        osc.stop(time + duration + 0.05);
+      }
+
+      function playNoise(time, duration, volume) {
+        const bufferSize = audioCtx.sampleRate * duration;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        const noise = audioCtx.createBufferSource();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+
+        filter.type = "highpass";
+        filter.frequency.value = 6500;
+
+        gain.gain.setValueAtTime(volume, time);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+        noise.buffer = buffer;
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(masterGain);
+
+        noise.start(time);
+        noise.stop(time + duration);
+      }
+
+      function playKick(time) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(95, time);
+        osc.frequency.exponentialRampToValueAtTime(38, time + 0.12);
+
+        gain.gain.setValueAtTime(0.13, time);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.14);
+
+        osc.connect(gain);
+        gain.connect(masterGain);
+
+        osc.start(time);
+        osc.stop(time + 0.16);
+      }
+
+      function playSnare(time) {
+        playNoise(time, 0.08, 0.032);
+        playTone(190, time, 0.06, "triangle", 0.032, masterGain);
+      }
+
+      function scheduleStep(time) {
+        const bassNote = bassLine[step % bassLine.length];
+        const arpNote = arpLine[step % arpLine.length];
+
+        if (step % 4 === 0) playKick(time);
+        if (step % 8 === 4) playSnare(time);
+        if (step % 2 === 0) playTone(midiToFreq(bassNote), time, stepTime * 1.8, "sawtooth", 0.05);
+
+        playTone(midiToFreq(arpNote), time, stepTime * 0.75, "square", 0.022);
+
+        if (step % 2 === 1) playNoise(time, 0.025, 0.016);
+
+        step++;
+      }
+
+      function scheduler() {
+        while (nextNoteTime < audioCtx.currentTime + 0.25) {
+          scheduleStep(nextNoteTime);
+          nextNoteTime += stepTime;
+        }
+      }
+
+      function start() {
+        init();
+        if (!audioCtx || isPlaying) return;
+
+        isPlaying = true;
+        step = 0;
+        nextNoteTime = audioCtx.currentTime + 0.05;
+        timer = setInterval(scheduler, 60);
+        updateButton();
+      }
+
+      function stop() {
+        if (!isPlaying) return;
+
+        isPlaying = false;
+        clearInterval(timer);
+        timer = null;
+        updateButton();
+      }
+
+      function toggle() {
+        if (isPlaying) stop();
+        else start();
+      }
+
+      function updateButton() {
+        const btn = document.getElementById("musicToggleBtn");
+        if (!btn) return;
+
+        btn.textContent = isPlaying ? "Music: ON" : "Music: OFF";
+        btn.classList.toggle("music-on", isPlaying);
+      }
+
+      return { init, start, stop, toggle };
+    })();
+
+    document.addEventListener("pointerdown", () => {
+      SFX.init();
+      CYBER_MUSIC.init();
+    }, { once: true });
+
+    document.addEventListener("click", (event) => {
+      if (!(event.target instanceof Element)) return;
+      const clicked = event.target.closest("button, .back-link");
+      if (clicked) SFX.play("click");
+    });
+
+    const data = {
+      1: {
+        "Animals": [
+          { word: "TIGER", hint: "A large striped wild cat." },
+          { word: "RABBIT", hint: "A small animal with long ears." },
+          { word: "GIRAFFE", hint: "An animal with a very long neck." },
+          { word: "ELEPHANT", hint: "A very large animal with a trunk." },
+          { word: "DOLPHIN", hint: "A smart sea animal." },
+          { word: "PENGUIN", hint: "A bird that cannot fly and lives in cold places." }
+        ],
+        "Food": [
+          { word: "PIZZA", hint: "Round Italian food with cheese." },
+          { word: "NOODLES", hint: "Long thin food often eaten with soup or sauce." },
+          { word: "BURGER", hint: "A sandwich with meat inside." },
+          { word: "CHEESE", hint: "A dairy food often used on pizza." },
+          { word: "CHICKEN", hint: "A common meat from a bird." },
+          { word: "SANDWICH", hint: "Food made with bread and filling." }
+        ],
+        "Colors": [
+          { word: "YELLOW", hint: "The color of bananas." },
+          { word: "PURPLE", hint: "A color made from red and blue." },
+          { word: "ORANGE", hint: "A color and also a fruit." },
+          { word: "GREEN", hint: "The color of grass." },
+          { word: "BLACK", hint: "The darkest color." },
+          { word: "WHITE", hint: "The color of snow." }
+        ],
+        "Fruits": [
+          { word: "BANANA", hint: "A long yellow fruit." },
+          { word: "APPLE", hint: "A common red or green fruit." },
+          { word: "MANGO", hint: "A sweet tropical fruit." },
+          { word: "PAPAYA", hint: "A tropical orange fruit." },
+          { word: "AVOCADO", hint: "A green fruit often used in juice or toast." },
+          { word: "WATERMELON", hint: "A large fruit with red flesh and black seeds." }
+        ],
+        "Jobs": [
+          { word: "TEACHER", hint: "A person who helps students learn." },
+          { word: "DOCTOR", hint: "A person who treats sick people." },
+          { word: "CHEF", hint: "A person who cooks professionally." },
+          { word: "DRIVER", hint: "A person who drives vehicles." },
+          { word: "PILOT", hint: "A person who flies planes." },
+          { word: "NURSE", hint: "A person who helps doctors and patients." }
+        ],
+        "Sports": [
+          { word: "SOCCER", hint: "A sport played with a ball and two goals." },
+          { word: "BADMINTON", hint: "A sport with a racket and shuttlecock." },
+          { word: "BASKETBALL", hint: "A sport with hoops." },
+          { word: "SWIMMING", hint: "A sport done in water." },
+          { word: "TENNIS", hint: "A racket sport with a net." },
+          { word: "BOXING", hint: "A combat sport using punches." }
+        ],
+        "Countries": [
+          { word: "JAPAN", hint: "Tokyo is the capital." },
+          { word: "FRANCE", hint: "Paris is the capital." },
+          { word: "BRAZIL", hint: "A country famous for football and Carnival." },
+          { word: "INDONESIA", hint: "Jakarta is the capital." },
+          { word: "AUSTRALIA", hint: "A country and a continent." },
+          { word: "CANADA", hint: "A large country north of the USA." }
+        ],
+        "Family Members": [
+          { word: "MOTHER", hint: "Female parent." },
+          { word: "FATHER", hint: "Male parent." },
+          { word: "SISTER", hint: "Female sibling." },
+          { word: "BROTHER", hint: "Male sibling." },
+          { word: "COUSIN", hint: "Your uncle's or aunt's child." },
+          { word: "GRANDFATHER", hint: "Your parent's father." }
+        ],
+        "Hobbies": [
+          { word: "READING", hint: "A hobby with books." },
+          { word: "DRAWING", hint: "A hobby with pencils or pens." },
+          { word: "GAMING", hint: "Playing video games." },
+          { word: "COOKING", hint: "Making food." },
+          { word: "GARDENING", hint: "Growing plants." },
+          { word: "PHOTOGRAPHY", hint: "Taking pictures." }
+        ],
+        "School Things": [
+          { word: "PENCIL", hint: "Used for writing or drawing." },
+          { word: "ERASER", hint: "Used to remove pencil marks." },
+          { word: "NOTEBOOK", hint: "Used for writing notes." },
+          { word: "BACKPACK", hint: "A bag students carry." },
+          { word: "RULER", hint: "Used to measure length." },
+          { word: "HOMEWORK", hint: "School work done at home." }
+        ]
+      },
+
+      2: {
+        "World Geography": [
+          { word: "CONTINENT", hint: "A very large land area such as Asia or Africa." },
+          { word: "EQUATOR", hint: "An imaginary line around the middle of Earth." },
+          { word: "PENINSULA", hint: "Land surrounded by water on three sides." },
+          { word: "ARCHIPELAGO", hint: "A group of islands." },
+          { word: "HEMISPHERE", hint: "Half of the Earth." },
+          { word: "ALTITUDE", hint: "Height above sea level." }
+        ],
+        "Famous Landmarks": [
+          { word: "PYRAMIDS", hint: "Ancient structures in Egypt." },
+          { word: "COLOSSEUM", hint: "A famous ancient arena in Rome." },
+          { word: "TAJMAHAL", hint: "A famous white mausoleum in India." },
+          { word: "STONEHENGE", hint: "A prehistoric stone circle in England." },
+          { word: "MACHUPICCHU", hint: "An ancient Inca site in Peru." },
+          { word: "EIFFELTOWER", hint: "A famous tower in Paris." }
+        ],
+        "Science & Nature": [
+          { word: "PHOTOSYNTHESIS", hint: "How plants make food using sunlight." },
+          { word: "EVAPORATION", hint: "Liquid changing into gas." },
+          { word: "ECOSYSTEM", hint: "Living things and their environment." },
+          { word: "PREDATOR", hint: "An animal that hunts other animals." },
+          { word: "HABITAT", hint: "The natural home of an animal or plant." },
+          { word: "GRAVITY", hint: "The force that pulls things down." }
+        ],
+        "Technology": [
+          { word: "ALGORITHM", hint: "A set of steps for solving a problem." },
+          { word: "DATABASE", hint: "An organized collection of information." },
+          { word: "SOFTWARE", hint: "Programs used by a computer." },
+          { word: "HARDWARE", hint: "Physical parts of a computer." },
+          { word: "ENCRYPTION", hint: "Protecting information by making it unreadable." },
+          { word: "ROBOTICS", hint: "The field of designing and building robots." }
+        ],
+        "Space": [
+          { word: "GALAXY", hint: "A huge system of stars." },
+          { word: "ASTEROID", hint: "A rocky object orbiting the Sun." },
+          { word: "NEBULA", hint: "A cloud of gas and dust in space." },
+          { word: "SATELLITE", hint: "An object that orbits a planet." },
+          { word: "TELESCOPE", hint: "A tool used to see distant objects." },
+          { word: "CONSTELLATION", hint: "A pattern of stars." }
+        ],
+        "History": [
+          { word: "EMPIRE", hint: "A group of territories ruled by one power." },
+          { word: "REVOLUTION", hint: "A major change in government or society." },
+          { word: "MONARCHY", hint: "A system ruled by a king or queen." },
+          { word: "COLONY", hint: "A territory controlled by another country." },
+          { word: "CIVILIZATION", hint: "An advanced human society." },
+          { word: "TREATY", hint: "A formal agreement between countries." }
+        ],
+        "Literature & Books": [
+          { word: "NOVEL", hint: "A long fictional book." },
+          { word: "CHARACTER", hint: "A person in a story." },
+          { word: "PLOT", hint: "The main events of a story." },
+          { word: "METAPHOR", hint: "A figure of speech comparing two things directly." },
+          { word: "NARRATOR", hint: "The voice that tells a story." },
+          { word: "GENRE", hint: "A type or category of literature." }
+        ],
+        "Health & Lifestyle": [
+          { word: "NUTRITION", hint: "The study of food and health." },
+          { word: "EXERCISE", hint: "Physical activity for health." },
+          { word: "HYDRATION", hint: "Having enough water in the body." },
+          { word: "SLEEP", hint: "Resting state needed by the body." },
+          { word: "BALANCE", hint: "A healthy mix between activities." },
+          { word: "MINDFULNESS", hint: "Paying attention to the present moment." }
+        ],
+        "Famous People": [
+          { word: "EINSTEIN", hint: "A famous scientist known for relativity." },
+          { word: "MANDELA", hint: "A South African leader and activist." },
+          { word: "SHAKESPEARE", hint: "A famous English playwright." },
+          { word: "BEETHOVEN", hint: "A famous classical composer." },
+          { word: "NEWTON", hint: "A scientist associated with gravity." },
+          { word: "PICASSO", hint: "A famous painter known for Cubism." }
+        ],
+        "Inventions & Discoveries": [
+          { word: "TELEPHONE", hint: "An invention used for long-distance communication." },
+          { word: "ELECTRICITY", hint: "A form of energy used to power devices." },
+          { word: "VACCINE", hint: "A medical discovery that helps prevent disease." },
+          { word: "MICROSCOPE", hint: "A tool used to see tiny objects." },
+          { word: "PRINTINGPRESS", hint: "An invention that helped spread books." },
+          { word: "PENICILLIN", hint: "An antibiotic discovered by Alexander Fleming." }
+        ]
+      }
+    };
+
+    const canvas = document.getElementById("hangmanCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const levelSelect = document.getElementById("levelSelect");
+    const categorySelect = document.getElementById("categorySelect");
+    const scoreText = document.getElementById("scoreText");
+    const winsText = document.getElementById("winsText");
+    const livesText = document.getElementById("livesText");
+    const streakText = document.getElementById("streakText");
+    const wordDisplay = document.getElementById("wordDisplay");
+    const keyboard = document.getElementById("keyboard");
+    const hintText = document.getElementById("hintText");
+    const statusBox = document.getElementById("statusBox");
+    const wrongLettersText = document.getElementById("wrongLettersText");
+    const currentLevelText = document.getElementById("currentLevelText");
+    const currentCategoryText = document.getElementById("currentCategoryText");
+    const wordList = document.getElementById("wordList");
+
+    const resultModal = document.getElementById("resultModal");
+    const resultTitle = document.getElementById("resultTitle");
+    const resultMessage = document.getElementById("resultMessage");
+    const resultWord = document.getElementById("resultWord");
+
+    let currentLevel = "1";
+    let currentCategory = "Animals";
+    let currentWordObj = null;
+    let currentWord = "";
+    let guessedLetters = [];
+    let wrongLetters = [];
+    let usedWords = {};
+    let score = 0;
+    let wins = 0;
+    let streak = 0;
+    let gameActive = false;
+    const maxWrong = 6;
+
+    function populateCategories() {
+      currentLevel = levelSelect.value;
+      const categories = Object.keys(data[currentLevel]);
+
+      categorySelect.innerHTML = "";
+
+      categories.forEach((category) => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        categorySelect.appendChild(option);
+      });
+
+      currentCategory = categories[0];
+      categorySelect.value = currentCategory;
+      updateLabels();
+      renderWordList();
+    }
+
+    function handleLevelChange() {
+      populateCategories();
+      resetRoundOnly();
+      SFX.play("start");
+      statusBox.textContent = "Level changed. New word bank loaded.";
+    }
+
+    function handleCategoryChange() {
+      currentCategory = categorySelect.value;
+      updateLabels();
+      renderWordList();
+      resetRoundOnly();
+      SFX.play("hint");
+      statusBox.textContent = "Category changed. Click Start or New Word.";
+    }
+
+    function updateLabels() {
+      currentLevelText.textContent = `Level ${currentLevel}`;
+      currentCategoryText.textContent = currentCategory;
+    }
+
+    function getWordKey(word) {
+      return `${currentLevel}-${currentCategory}-${word}`;
+    }
+
+    function getAvailableWords() {
+      const words = data[currentLevel][currentCategory];
+      const available = words.filter((item) => !usedWords[getWordKey(item.word)]);
+
+      return available.length > 0 ? available : words;
+    }
+
+    function chooseRandomWord() {
+      const available = getAvailableWords();
+      return available[Math.floor(Math.random() * available.length)];
+    }
+
+    function startGame() {
+      SFX.play("start");
+      CYBER_MUSIC.start();
+      newWord();
+    }
+
+    function newWord() {
+      currentLevel = levelSelect.value;
+      currentCategory = categorySelect.value;
+      currentWordObj = chooseRandomWord();
+      currentWord = currentWordObj.word.toUpperCase();
+
+      guessedLetters = [];
+      wrongLetters = [];
+      gameActive = true;
+
+      hintText.textContent = "Use Hint if your students need help.";
+      statusBox.textContent = "New word loaded. Start guessing.";
+      updateLabels();
+      renderKeyboard();
+      updateDisplay();
+      drawHangman();
+      renderWordList();
+    }
+
+    function resetRoundOnly() {
+      currentWordObj = null;
+      currentWord = "";
+      guessedLetters = [];
+      wrongLetters = [];
+      gameActive = false;
+      wordDisplay.textContent = "CLICK START";
+      hintText.textContent = "Click Start to begin.";
+      wrongLettersText.textContent = "None";
+      renderKeyboard();
+      drawHangman();
+      updateHud();
+    }
+
+    function renderKeyboard() {
+      keyboard.innerHTML = "";
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+      letters.forEach((letter) => {
+        const button = document.createElement("button");
+        button.className = "letter-btn";
+        button.textContent = letter;
+        button.onclick = () => guessLetter(letter);
+
+        if (guessedLetters.includes(letter)) {
+          button.disabled = true;
+          button.classList.add(currentWord.includes(letter) ? "correct" : "wrong");
+        }
+
+        keyboard.appendChild(button);
+      });
+    }
+
+    function guessLetter(letter) {
+      if (!gameActive || guessedLetters.includes(letter)) return;
+
+      guessedLetters.push(letter);
+
+      if (currentWord.includes(letter)) {
+        score += 20;
+        statusBox.textContent = `Correct letter: ${letter}. Neon points secured.`;
+        SFX.play("correct");
+      } else {
+        wrongLetters.push(letter);
+        score = Math.max(0, score - 10);
+        statusBox.textContent = `Wrong letter: ${letter}. The hangman system is charging.`;
+        SFX.play("wrong");
+      }
+
+      updateDisplay();
+      renderKeyboard();
+      drawHangman();
+      checkGameState();
+    }
+
+    function updateDisplay() {
+      const display = currentWord
+        ? currentWord.split("").map((char) => guessedLetters.includes(char) ? char : "_").join(" ")
+        : "CLICK START";
+
+      wordDisplay.textContent = display;
+      wrongLettersText.textContent = wrongLetters.length ? wrongLetters.join(", ") : "None";
+      updateHud();
+    }
+
+    function updateHud() {
+      scoreText.textContent = score;
+      winsText.textContent = wins;
+      livesText.textContent = maxWrong - wrongLetters.length;
+      streakText.textContent = streak;
+    }
+
+    function showHint() {
+      if (!gameActive || !currentWordObj) {
+        statusBox.textContent = "Start a word first, boss.";
+        return;
+      }
+
+      hintText.textContent = currentWordObj.hint;
+      score = Math.max(0, score - 25);
+      statusBox.textContent = "Hint used. -25 points because knowledge ain't free.";
+      SFX.play("hint");
+      updateHud();
+    }
+
+    function revealAnswer() {
+      if (!gameActive || !currentWord) {
+        statusBox.textContent = "No active word to reveal.";
+        return;
+      }
+
+      score = Math.max(0, score - 50);
+      streak = 0;
+      gameActive = false;
+      guessedLetters = Array.from(new Set(currentWord.split("")));
+      updateDisplay();
+      renderKeyboard();
+      showResult("Answer Revealed", "The system exposed the word. -50 points.", currentWord, false);
+      SFX.play("lose");
+    }
+
+    function checkGameState() {
+      const won = currentWord.split("").every((char) => guessedLetters.includes(char));
+      const lost = wrongLetters.length >= maxWrong;
+
+      if (won) {
+        gameActive = false;
+        wins++;
+        streak++;
+        score += 100 + streak * 20;
+        usedWords[getWordKey(currentWord)] = true;
+        updateHud();
+        renderWordList();
+        showResult("You Win", `Correct word guessed. +100 bonus and streak bonus.`, currentWord, true);
+        SFX.play("win");
+      }
+
+      if (lost) {
+        gameActive = false;
+        streak = 0;
+        updateHud();
+        showResult("Game Over", "The neon hangman completed. Try the next word.", currentWord, false);
+        SFX.play("lose");
+      }
+    }
+
+    function showResult(title, message, word, didWin) {
+      resultTitle.textContent = title;
+      resultMessage.textContent = message;
+      resultWord.textContent = word;
+      resultWord.style.color = didWin ? "var(--green)" : "var(--red)";
+      resultModal.classList.add("active");
+    }
+
+    function closeResultAndContinue() {
+      resultModal.classList.remove("active");
+      newWord();
+    }
+
+    function renderWordList() {
+      wordList.innerHTML = "";
+
+      const words = data[currentLevel][currentCategory];
+
+      words.forEach((item) => {
+        const div = document.createElement("div");
+        const used = Boolean(usedWords[getWordKey(item.word)]);
+        div.className = used ? "word-pill used" : "word-pill";
+
+        const masked = item.word.split("").map(() => "•").join("");
+
+        div.innerHTML = `
+          <span>${used ? item.word : masked}</span>
+          <span>${used ? "DONE" : item.word.length + " letters"}</span>
+        `;
+
+        wordList.appendChild(div);
+      });
+    }
+
+    function drawLine(x1, y1, x2, y2, color = "#22f7ff", width = 6) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = "round";
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    function drawHangman() {
+      const wrong = wrongLetters.length;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#02030a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = "rgba(143, 77, 255, 0.22)";
+      ctx.lineWidth = 1;
+
+      for (let x = 0; x < canvas.width; x += 32) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+
+      for (let y = 0; y < canvas.height; y += 32) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      drawLine(130, 410, 500, 410, "#22f7ff", 7);
+      drawLine(210, 410, 210, 90, "#22f7ff", 7);
+      drawLine(210, 90, 390, 90, "#22f7ff", 7);
+      drawLine(390, 90, 390, 130, "#22f7ff", 7);
+
+      ctx.fillStyle = "#ffe66d";
+      ctx.font = "bold 22px Courier New";
+      ctx.textAlign = "center";
+      ctx.shadowColor = "#ff2bd6";
+      ctx.shadowBlur = 14;
+      ctx.fillText("NEON HANGMAN SYSTEM", canvas.width / 2, 38);
+      ctx.shadowBlur = 0;
+
+      if (wrong >= 1) {
+        ctx.strokeStyle = "#ffe66d";
+        ctx.lineWidth = 6;
+        ctx.shadowColor = "#ffe66d";
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        ctx.arc(390, 160, 30, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      if (wrong >= 2) drawLine(390, 190, 390, 285, "#ffe66d", 6);
+      if (wrong >= 3) drawLine(390, 215, 340, 250, "#ffe66d", 6);
+      if (wrong >= 4) drawLine(390, 215, 440, 250, "#ffe66d", 6);
+      if (wrong >= 5) drawLine(390, 285, 345, 345, "#ffe66d", 6);
+      if (wrong >= 6) drawLine(390, 285, 435, 345, "#ffe66d", 6);
+
+      if (wrong >= 6) {
+        ctx.fillStyle = "#ff4d6d";
+        ctx.font = "bold 34px Courier New";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#ff4d6d";
+        ctx.shadowBlur = 16;
+        ctx.fillText("SYSTEM FAILED", canvas.width / 2, 455);
+        ctx.shadowBlur = 0;
+      } else if (gameActive) {
+        ctx.fillStyle = "#39ff88";
+        ctx.font = "bold 22px Courier New";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#39ff88";
+        ctx.shadowBlur = 12;
+        ctx.fillText(`${maxWrong - wrong} LIVES REMAINING`, canvas.width / 2, 455);
+        ctx.shadowBlur = 0;
+      } else {
+        ctx.fillStyle = "#aab2dd";
+        ctx.font = "bold 22px Courier New";
+        ctx.textAlign = "center";
+        ctx.fillText("AWAITING WORD INPUT", canvas.width / 2, 455);
+      }
+    }
+
+    const musicButton = document.createElement("button");
+    musicButton.id = "musicToggleBtn";
+    musicButton.textContent = "Music: OFF";
+    musicButton.onclick = () => CYBER_MUSIC.toggle();
+    document.body.appendChild(musicButton);
+
+    document.addEventListener("keydown", (event) => {
+      const key = event.key.toUpperCase();
+
+      if (/^[A-Z]$/.test(key)) {
+        guessLetter(key);
+      }
+    });
+
+    populateCategories();
+    renderKeyboard();
+    drawHangman();
+    updateHud();
+  </script>
+</body>
+</html>
